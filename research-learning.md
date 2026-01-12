@@ -14,6 +14,46 @@ description: 科研学习工作流程 - 根据用户指导产出科研成果
 - ✅ 迭代探索：支持多轮迭代优化
 - ✅ 成果导向：输出可复现的科研成果
 
+### ⚠️ 重要：成果自动保存
+
+**每次研究都会创建独立的文件夹保存所有成果**
+
+```
+research_output/
+└── YYYYMMDD_[研究主题]/     ← 每次研究一个文件夹
+    ├── report.md             ← 技术报告
+    ├── code/                 ← 仿真代码
+    │   └── research_xxx.m
+    ├── data/                 ← 数据文件
+    │   └── results.mat
+    ├── figures/              ← 结果图表
+    │   ├── fig_1.png
+    │   └── fig_2.png
+    └── references/           ← 理论笔记
+        └── theory_notes.md
+```
+
+**命名规则**：
+- 文件夹名：`YYYYMMDD_简短研究主题`（如 `20260112_collision_frequency_estimation`）
+- 自动创建日期前缀，确保按时间顺序排列
+- 所有相关文件集中保存，便于归档和分享
+
+**示例**：
+```
+research_output/
+├── 20260110_bandwidth_optimization/      # 第一次研究
+│   ├── report.md
+│   ├── code/
+│   └── figures/
+├── 20260112_collision_estimation/        # 第二次研究
+│   ├── report.md
+│   ├── code/
+│   └── data/
+└── 20260115_frequency_window_analysis/   # 第三次研究
+    ├── report.md
+    └── code/
+```
+
 ---
 
 ## 必读资源
@@ -333,6 +373,51 @@ colors_research = [
 ### C. 参考资料
 - [核心研究档案] 第X节
 - [thesis-code] `xxx.m`
+```
+
+---
+
+### ⚠️ AI自动执行的保存操作
+
+完成研究后，AI必须执行以下保存步骤：
+
+**步骤1：创建研究文件夹**
+```bash
+# 自动创建文件夹结构
+research_output/YYYYMMDD_[研究主题]/
+    ├── code/
+    ├── data/
+    ├── figures/
+    └── references/
+```
+
+**步骤2：保存所有文件到对应目录**
+- 技术报告 → `report.md`
+- MATLAB代码 → `code/research_xxx.m`
+- 数据文件 → `data/results.mat`
+- 图表文件 → `figures/fig_*.png`
+- 理论笔记 → `references/theory_notes.md`
+
+**步骤3：生成成果清单**
+在研究文件夹根目录创建 `README.md`：
+```markdown
+# [研究主题]
+
+**研究日期**：YYYY-MM-DD
+**研究目标**：[简要描述]
+
+## 文件清单
+- `report.md` - 完整技术报告
+- `code/xxx.m` - 仿真代码
+- `data/results.mat` - 数据文件
+- `figures/*.png` - 结果图表
+
+## 主要发现
+- [发现1]
+- [发现2]
+
+## 后续工作
+- [建议1]
 ```
 
 ---
