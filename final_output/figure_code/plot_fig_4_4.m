@@ -101,14 +101,14 @@ annotation('textarrow', arrow_x/max(f_probe_GHz), arrow_y, ...
            'FontWeight', 'bold', 'LineWidth', 1.5);
 
 % 论文标准绘图设置
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
+set(gca, 'FontName', 'SimHei', 'FontSize', 12);
 set(gca, 'LineWidth', 1.2);
 grid on; box on;
 
 % 坐标轴标签
-xlabel('探测频率 / GHz', 'FontSize', 14, 'FontWeight', 'bold');
-ylabel('归一化权重 w_i', 'FontSize', 14, 'FontWeight', 'bold');
-title('图 4-4 归一化权重随探测频率的分布规律', 'FontSize', 14, 'FontWeight', 'bold');
+xlabel('探测频率 / GHz', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
+ylabel('归一化权重 w_i', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
+title('图 4-4 归一化权重随探测频率的分布规律', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 
 % 图例
 legend('Location', 'southwest', 'FontSize', 10);
@@ -119,22 +119,9 @@ ylim([0, 1.1]);
 
 % 添加截止频率标注
 text(f_p_GHz + 0.3, 0.05, sprintf('截止频率\nf_p = %.1f GHz', f_p_GHz), ...
-     'FontSize', 10, 'Color', [0.7, 0, 0], 'FontWeight', 'bold');
+     'FontSize', 10, 'FontName', 'SimHei', 'Color', [0.7, 0, 0], 'FontWeight', 'bold');
 
-%% 4. 保存图表
-% 确保输出目录存在
-output_dir = '../final_output/figures/';
-if ~exist(output_dir, 'dir')
-    mkdir(output_dir);
-end
-
-% 保存为 PNG（高分辨率）
-print('-dpng', '-r300', [output_dir, '图4-4_加权矩阵频率分布.png']);
-
-% 保存为 SVG（矢量图，用于排版）
-print('-dsvg', [output_dir, '图4-4_加权矩阵频率分布.svg']);
-
-fprintf('图 4-4 已保存至 %s\n', output_dir);
+fprintf('图 4-4 生成完成！\n');
 fprintf('关键特征验证：\n');
 fprintf('  - 高频段(f > 35 GHz)权重范围: %.2f - %.2f\n', ...
         min(w(f_probe_GHz > 35)), max(w(f_probe_GHz > 35)));

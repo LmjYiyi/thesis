@@ -66,19 +66,15 @@ plot([f_start/1e9 35], [0.2 0.2], 'm--', 'LineWidth', 1.5, 'DisplayName', '系�
 text(34.4, 1.9, '低频段:\pm1.5%', 'FontSize', 10, 'Color', 'b');
 
 colorbar;
-ylabel(colorbar, '探测频率(GHz)', 'FontSize', 10);
+ylabel(colorbar, '探测频率(GHz)', 'FontSize', 10, 'FontName', 'SimHei');
 
-xlabel('探测频率(GHz)', 'FontSize', 12);
-ylabel('归一化残差(%)', 'FontSize', 12);
-title('图4-8 中密度工况下拟合残差的频率分布', 'FontSize', 13, 'FontWeight', 'bold');
+xlabel('探测频率(GHz)', 'FontSize', 12, 'FontName', 'SimHei');
+ylabel('归一化残差(%)', 'FontSize', 12, 'FontName', 'SimHei');
+title('图4-8 中密度工况下拟合残差的频率分布', 'FontSize', 13, 'FontName', 'SimHei', 'FontWeight', 'bold');
 legend('Location', 'best', 'FontSize', 10);
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 11);
+set(gca, 'FontName', 'SimHei', 'FontSize', 11);
 grid on; box on;
 xlim([f_start/1e9 f_end/1e9]);
 ylim([-2 2.5]);
 
-%% 4. 保存图表
-print('-dpng', '-r300', 'final_output/figures/图4-8_拟合残差频率分布.png');
-print('-dsvg', 'final_output/figures/图4-8_拟合残差频率分布.svg');
-
-fprintf('图 4-8 已保存至 final_output/figures/\n');
+fprintf('图 4-8 生成完成！\n');

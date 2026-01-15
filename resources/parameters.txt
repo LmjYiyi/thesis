@@ -1,0 +1,22 @@
+● Center Frequency(F0) 14GHz
+● Pass Band Frequency 10 ~ 18GHz
+● Pass Band Insertion Loss ≤2.0dB
+● Pass Band Ripple ≤1.2dB
+● Pass Band Return Loss ≥17dB
+● Stop Band Rejection ≥80dB @ DC ~ 7.7GHz
+≥50dB @ 7.7 ~ 8.8GHz
+≥50dB @ 18.5 ~ 18.8GHz
+≥80dB @ 18.8 ~ 25.5GHz
+● Impedance 50 Ohms
+● Power Handling 5W Max.
+● Connectors ø0.5*2mm PIN (SMA-Female Removable)
+● Surface Finish Painted Black
+● Temperature Range -30°C ~ +70°C
+● Material Housing: H62 Copper alloy
+Cover: H62 Copper alloy
+Tuning screw: H62 Copper alloy
+Connectors: Stainless Steel
+Other screw: Stainless Steel
+● Dimensions 90*20*11mm
+● Net weight TBD
+●Outline Drawing: (Dimensions Unit: mm, Dimensions Tolerance: ±0.5mm)

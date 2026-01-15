@@ -41,10 +41,11 @@ f_probe = linspace(f_start, f_end, 100);
 figure('Position', [100, 100, 1200, 400]);
 
 for i = 1:3
+    ne_current = n_e_cases(i);
     f_p = f_p_cases(i);
     
-    % 理论群时延曲线
-    tau_theory = (d/c) * (1 ./ sqrt(1 - (f_p./f_probe).^2) - 1);
+    % 理论群时延曲线（使用完整Drude模型）
+    tau_theory = calculate_drude_delay(f_probe, ne_current, nu_e, d, c, epsilon_0, m_e, e);
     
     % 模拟ESPRIT测量点(加噪声)
     sigma_base = 5e-11;  % 基础噪声水平
@@ -66,19 +67,47 @@ for i = 1:3
     plot(f_probe/1e9, tau_fit*1e9, 'b--', 'LineWidth', 2, 'DisplayName', '拟合曲线');
     
     colorbar;
-    ylabel(colorbar, '权重(归一化)', 'FontSize', 9);
+    ylabel(colorbar, '权重(归一化)', 'FontSize', 9, 'FontName', 'SimHei');
     
-    xlabel('探测频率(GHz)', 'FontSize', 11);
-    ylabel('相对群时延(ns)', 'FontSize', 11);
-    title(sprintf('(%c) f_p=%.1f GHz', 'a'+i-1, f_p/1e9), 'FontSize', 12, 'FontWeight', 'bold');
+    xlabel('探测频率(GHz)', 'FontSize', 11, 'FontName', 'SimHei');
+    ylabel('相对群时延(ns)', 'FontSize', 11, 'FontName', 'SimHei');
+    title(sprintf('(%c) f_p=%.1f GHz', 'a'+i-1, f_p/1e9), 'FontSize', 12, 'FontName', 'SimHei', 'FontWeight', 'bold');
     legend('Location', 'best', 'FontSize', 9);
-    set(gca, 'FontName', 'Times New Roman', 'FontSize', 10);
+    set(gca, 'FontName', 'SimHei', 'FontSize', 10);
     grid on; box on;
     xlim([f_start/1e9 f_end/1e9]);
 end
 
-%% 3. 保存图表
-print('-dpng', '-r300', 'final_output/figures/图4-7_不同电子密度拟合结果.png');
-print('-dsvg', 'final_output/figures/图4-7_不同电子密度拟合结果.svg');
+fprintf('图 4-7 生成完成！\n');
 
-fprintf('图 4-7 已保存至 final_output/figures/\n');
+%% 局部函数：完整Drude模型时延计算（相位求导法）
+function tau_rel = calculate_drude_delay(f_vec, ne_val, nu_val, d, c, eps0, me, e_charge)
+    % 核心物理模型：Drude模型相位求导法（与 thesis-code/LM.m 一致）
+    % 计算相对群时延 = (等离子体群时延) - (真空群时延)
+    
+    omega_vec = 2 * pi * f_vec;
+    wp_val = sqrt(ne_val * e_charge^2 / (eps0 * me));
+    
+    % Drude 模型复介电常数 (含碰撞频率虚部)
+    % epsilon = 1 - wp^2 / (w*(w + i*nu))
+    eps_r = 1 - (wp_val^2) ./ (omega_vec .* (omega_vec + 1i*nu_val));
+    
+    % 复波数 k = (w/c) * sqrt(eps_r)
+    k_vec = (omega_vec ./ c) .* sqrt(eps_r);
+    
+    % 等离子体段的总相位 phi = -real(k) * d
+    phi_plasma = -real(k_vec) * d;
+    
+    % 数值微分求群时延 tau_g = -d(phi)/d(omega)
+    d_phi = diff(phi_plasma);
+    d_omega = diff(omega_vec);
+    
+    tau_total = -d_phi ./ d_omega;
+    
+    % 维度补齐 (diff会少一个点，这里简单复制最后一个值)
+    tau_total = [tau_total, tau_total(end)];
+    
+    % 减去真空穿过同样厚度 d 的时延 d/c
+    % 得到的就是 "等离子体引起的附加时延"
+    tau_rel = tau_total - (d/c);
+end

@@ -103,13 +103,13 @@ text(B_typical/1e9, Delta_f_typical/1e6, ...
      'FontSize', 10, 'VerticalAlignment', 'bottom');
 
 % 图表设置
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
+set(gca, 'FontName', 'SimHei', 'FontSize', 12);
 set(gca, 'LineWidth', 1.2);
 grid on; box on;
 
-xlabel('带宽 B / GHz', 'FontSize', 14);
-ylabel('频谱展宽 \Delta f_D / MHz', 'FontSize', 14);
-title('图 3-6 带宽-散焦非线性耦合曲线', 'FontSize', 14, 'FontWeight', 'bold');
+xlabel('带宽 B / GHz', 'FontSize', 14, 'FontName', 'SimHei');
+ylabel('频谱展宽 \Delta f_D / MHz', 'FontSize', 14, 'FontName', 'SimHei');
+title('图 3-6 带宽-散焦非线性耦合曲线', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 
 legend('Location', 'northwest', 'FontSize', 11);
 
@@ -117,15 +117,7 @@ legend('Location', 'northwest', 'FontSize', 11);
 xlim([1 5]);
 ylim([0 max(Delta_f_D_full/1e6)*1.1]);
 
-%% 5. 保存图表
-
-% 保存为 PNG（高分辨率）
-print('-dpng', '-r300', '../figures/图3-6_带宽散焦耦合曲线.png');
-
-% 保存为 SVG（矢量图）
-print('-dsvg', '../figures/图3-6_带宽散焦耦合曲线.svg');
-
-fprintf('图 3-6 已保存至 final_output/figures/\n');
+fprintf('图 3-6 生成完成！\n');
 fprintf('关键参数：\n');
 fprintf('  - 截止频率 f_p: %.0f GHz\n', f_p/1e9);
 fprintf('  - 色散系数 C1: %.3e\n', C1);

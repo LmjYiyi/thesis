@@ -88,25 +88,17 @@ text(t(idx_end)*1e3, tau_g_strong(idx_end)*1e9, ...
      'FontSize', 10, 'Color', color_strong, 'VerticalAlignment', 'top');
 
 % 图表设置
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
+set(gca, 'FontName', 'SimHei', 'FontSize', 12);
 set(gca, 'LineWidth', 1.2);
 grid on; box on;
 
-xlabel('时间 t / ms', 'FontSize', 14);
-ylabel('群时延 \tau_g / ns', 'FontSize', 14);
-title('图 3-4 时延演化轨迹对比', 'FontSize', 14, 'FontWeight', 'bold');
+xlabel('时间 t / ms', 'FontSize', 14, 'FontName', 'SimHei');
+ylabel('群时延 \tau_g / ns', 'FontSize', 14, 'FontName', 'SimHei');
+title('图 3-4 时延演化轨迹对比', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 
 legend('Location', 'northeast', 'FontSize', 11);
 
-%% 4. 保存图表
-
-% 保存为 PNG（高分辨率）
-print('-dpng', '-r300', '../figures/图3-4_时延演化轨迹对比.png');
-
-% 保存为 SVG（矢量图）
-print('-dsvg', '../figures/图3-4_时延演化轨迹对比.svg');
-
-fprintf('图 3-4 已保存至 final_output/figures/\n');
+fprintf('图 3-4 生成完成！\n');
 fprintf('  - 无色散时延: %.3f ns (恒定)\n', A0_ideal*1e9);
 fprintf('  - 强色散起始时延: %.3f ns\n', A0_strong*1e9);
 fprintf('  - 线性系数 A1: %.3e s^-1\n', A1_strong);

@@ -39,19 +39,19 @@ nu_e_labels = {'-50%', '精确', '+50%'};
 % 探测频率
 f_probe = linspace(f_start, f_end, 100);
 
-%% 2. 计算拟合曲线
-% 理论群时延(主要由n_e决定,ν_e影响极小)
-tau_theory = (d/c) * (1 ./ sqrt(1 - (f_p./f_probe).^2) - 1);
+%% 2. 计算拟合曲线（使用完整Drude模型）
+% 使用真实碰撞频率计算测量基准
+tau_theory_true = calculate_drude_delay(f_probe, n_e_true, nu_e_true, d, c, epsilon_0, m_e, e);
 
 % 模拟测量点(加噪声)
 rng(42);  % 固定随机种子
-tau_meas = tau_theory + 3e-11 * randn(size(tau_theory));
+tau_meas = tau_theory_true + 3e-11 * randn(size(tau_theory_true));
 
-% 不同先验下的拟合曲线(形态几乎相同)
+% 不同先验下的拟合曲线（使用不同碰撞频率）
 tau_fits = cell(1, 3);
 for i = 1:3
-    % 简化:由于ν_e影响极小,拟合曲线基本重合
-    tau_fits{i} = tau_theory + 1e-12 * (i-2) * sin(2*pi*(f_probe-f_start)/(f_end-f_start));
+    % 使用完整Drude模型，但采用不同的碰撞频率先验
+    tau_fits{i} = calculate_drude_delay(f_probe, n_e_true, nu_e_priors(i), d, c, epsilon_0, m_e, e);
 end
 
 %% 3. 绘图
@@ -71,21 +71,49 @@ for i = 1:3
          'DisplayName', sprintf('\\nu_e^{fix}%s (%.2f GHz)', nu_e_labels{i}, nu_e_priors(i)/1e9));
 end
 
-xlabel('探测频率(GHz)', 'FontSize', 13);
-ylabel('相对群时延(ns)', 'FontSize', 13);
-title('图4-10 不同碰撞频率先验下的拟合对比', 'FontSize', 14, 'FontWeight', 'bold');
+xlabel('探测频率(GHz)', 'FontSize', 13, 'FontName', 'SimHei');
+ylabel('相对群时延(ns)', 'FontSize', 13, 'FontName', 'SimHei');
+title('图4-10 不同碰撞频率先验下的拟合对比', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 legend('Location', 'best', 'FontSize', 11, 'Interpreter', 'tex');
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
+set(gca, 'FontName', 'SimHei', 'FontSize', 12);
 grid on; box on;
 xlim([f_start/1e9 f_end/1e9]);
 
 % 添加文本说明
 text(34.5, max(tau_meas)*1e9*0.9, ...
      '曲线形态几乎重叠,\nu_e影响极小', ...
-     'FontSize', 11, 'Color', 'r', 'FontWeight', 'bold', 'Interpreter', 'tex');
+     'FontSize', 11, 'FontName', 'SimHei', 'Color', 'r', 'FontWeight', 'bold', 'Interpreter', 'tex');
 
-%% 4. 保存图表
-print('-dpng', '-r300', 'final_output/figures/图4-10_不同碰撞频率先验拟合对比.png');
-print('-dsvg', 'final_output/figures/图4-10_不同碰撞频率先验拟合对比.svg');
+fprintf('图 4-10 生成完成！\n');
 
-fprintf('图 4-10 已保存至 final_output/figures/\n');
+%% 局部函数：完整Drude模型时延计算（相位求导法）
+function tau_rel = calculate_drude_delay(f_vec, ne_val, nu_val, d, c, eps0, me, e_charge)
+    % 核心物理模型：Drude模型相位求导法（与 thesis-code/LM.m 一致）
+    % 计算相对群时延 = (等离子体群时延) - (真空群时延)
+    
+    omega_vec = 2 * pi * f_vec;
+    wp_val = sqrt(ne_val * e_charge^2 / (eps0 * me));
+    
+    % Drude 模型复介电常数 (含碰撞频率虚部)
+    % epsilon = 1 - wp^2 / (w*(w + i*nu))
+    eps_r = 1 - (wp_val^2) ./ (omega_vec .* (omega_vec + 1i*nu_val));
+    
+    % 复波数 k = (w/c) * sqrt(eps_r)
+    k_vec = (omega_vec ./ c) .* sqrt(eps_r);
+    
+    % 等离子体段的总相位 phi = -real(k) * d
+    phi_plasma = -real(k_vec) * d;
+    
+    % 数值微分求群时延 tau_g = -d(phi)/d(omega)
+    d_phi = diff(phi_plasma);
+    d_omega = diff(omega_vec);
+    
+    tau_total = -d_phi ./ d_omega;
+    
+    % 维度补齐 (diff会少一个点，这里简单复制最后一个值)
+    tau_total = [tau_total, tau_total(end)];
+    
+    % 减去真空穿过同样厚度 d 的时延 d/c
+    % 得到的就是 "等离子体引起的附加时延"
+    tau_rel = tau_total - (d/c);
+end

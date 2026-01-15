@@ -114,14 +114,14 @@ text(0, min(residual_with_correction)*1e12*1.5, ...
      'Color', color_full, 'FontWeight', 'bold');
 
 % 论文标准绘图设置
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
+set(gca, 'FontName', 'SimHei', 'FontSize', 12);
 set(gca, 'LineWidth', 1.2);
 grid on; box on;
 
 % 坐标轴标签
-xlabel('反演电子密度相对误差 / %', 'FontSize', 14, 'FontWeight', 'bold');
-ylabel('拟合残差 RMS / ps', 'FontSize', 14, 'FontWeight', 'bold');
-title('图 4-3 修正项对拟合残差的影响对比', 'FontSize', 14, 'FontWeight', 'bold');
+xlabel('反演电子密度相对误差 / %', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
+ylabel('拟合残差 RMS / ps', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
+title('图 4-3 修正项对拟合残差的影响对比', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 
 % 图例
 legend('Location', 'northeast', 'FontSize', 11);
@@ -130,20 +130,7 @@ legend('Location', 'northeast', 'FontSize', 11);
 xlim([-5, 5]);
 ylim([0, y_max*1.1]);
 
-%% 5. 保存图表
-% 确保输出目录存在
-output_dir = '../final_output/figures/';
-if ~exist(output_dir, 'dir')
-    mkdir(output_dir);
-end
-
-% 保存为 PNG（高分辨率）
-print('-dpng', '-r300', [output_dir, '图4-3_修正项影响对比.png']);
-
-% 保存为 SVG（矢量图，用于排版）
-print('-dsvg', [output_dir, '图4-3_修正项影响对比.svg']);
-
-fprintf('图 4-3 已保存至 %s\n', output_dir);
+fprintf('图 4-3 生成完成！\n');
 fprintf('关键特征验证：\n');
 fprintf('  - 简化模型最大残差: %.2f ps (误差 > 2%%)\n', max(residual_without_correction)*1e12);
 fprintf('  - 完整模型最大残差: %.2f ps (误差 < 0.5%%)\n', max(residual_with_correction)*1e12);

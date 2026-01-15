@@ -75,7 +75,7 @@ end
 
 %% 6. 左轴设置(群时延)
 yyaxis left;
-ylabel('群时延 (ns)', 'FontSize', 14, 'FontName', 'Times New Roman', 'FontWeight', 'bold');
+ylabel('群时延 (ns)', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 set(gca, 'YColor', 'k');
 axis tight; % 自动适应数据范围
 yl_left = ylim; 
@@ -83,46 +83,30 @@ ylim([yl_left(1)*0.9, yl_left(2)*1.1]); % 微调边距
 
 %% 7. 右轴设置(透射幅度)
 yyaxis right;
-ylabel('透射幅度 S_{21} (dB)', 'FontSize', 14, 'FontName', 'Times New Roman', 'FontWeight', 'bold');
+ylabel('透射幅度 S_{21} (dB)', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 set(gca, 'YColor', 'r');
 ylim([-35, 5]); % 幅度范围(根据nue.m的数据范围)
 
 %% 8. 通用设置
 grid on;
-xlabel('探测频率 (GHz)', 'FontSize', 14, 'FontName', 'Times New Roman', 'FontWeight', 'bold');
+xlabel('探测频率 (GHz)', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 title('图 3-3b 碰撞频率的"时延钝感"与"幅度敏感"解耦特性', ...
-      'FontSize', 14, 'FontWeight', 'bold');
+      'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 
 % 图例
 legend(legend_str_nu, 'Location', 'SouthWest', 'FontSize', 12);
 
 % 字体设置
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
+set(gca, 'FontName', 'SimHei', 'FontSize', 12);
 set(gca, 'LineWidth', 1.2);
 box on;
 
 % 添加辅助说明文本
 text(22, yl_left(1)+0.1, '实线: 群时延 (左轴)', ...
-     'FontSize', 10, 'Color', 'k', 'FontName', 'Times New Roman');
+     'FontSize', 10, 'Color', 'k', 'FontName', 'SimHei');
 text(22, yl_left(1)+0.05, '虚线: 幅度 (右轴)', ...
-     'FontSize', 10, 'Color', 'r', 'FontName', 'Times New Roman');
+     'FontSize', 10, 'Color', 'r', 'FontName', 'SimHei');
 
-%% 9. 保存图表
-% 确保输出目录存在
-output_dir = '/Users/mac/Desktop/lunwx/.agent/workflows/final_output/figures';
-if ~exist(output_dir, 'dir')
-    mkdir(output_dir);
-end
-
-% 保存为 PNG（高分辨率）
-print('-dpng', '-r300', fullfile(output_dir, '第3章_图3-3b_碰撞频率解耦特性.png'));
-
-% 保存为 SVG（矢量图）
-print('-dsvg', fullfile(output_dir, '第3章_图3-3b_碰撞频率解耦特性.svg'));
-
-fprintf('图 3-3b 已保存至 %s\n', output_dir);
-fprintf('- PNG: 第3章_图3-3b_碰撞频率解耦特性.png (300 DPI)\n');
-fprintf('- SVG: 第3章_图3-3b_碰撞频率解耦特性.svg (矢量)\n');
 
 %% 10. 物理模型计算函数(与 nue.m 第127-152行一致)
 function [tau_g, mag_dB] = calculate_drude_response(omega, ne, nu, d, c, eps0, me, e)

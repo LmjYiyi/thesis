@@ -117,13 +117,13 @@ plot(18, f_p_trajectory_GHz(19), 'md', 'MarkerSize', 10, 'LineWidth', 2, ...
      'DisplayName', '第18次迭代 (收敛)');
 
 % 论文标准绘图设置
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 11);
+set(gca, 'FontName', 'SimHei', 'FontSize', 11);
 set(gca, 'LineWidth', 1.2);
 grid on; box on;
 
-xlabel('迭代次数', 'FontSize', 13, 'FontWeight', 'bold');
-ylabel('截止频率估计值 / GHz', 'FontSize', 13, 'FontWeight', 'bold');
-title('(a) 参数收敛轨迹', 'FontSize', 13, 'FontWeight', 'bold');
+xlabel('迭代次数', 'FontSize', 13, 'FontName', 'SimHei', 'FontWeight', 'bold');
+ylabel('截止频率估计值 / GHz', 'FontSize', 13, 'FontName', 'SimHei', 'FontWeight', 'bold');
+title('(a) 参数收敛轨迹', 'FontSize', 13, 'FontName', 'SimHei', 'FontWeight', 'bold');
 legend('Location', 'east', 'FontSize', 9);
 xlim([0, 20]);
 
@@ -150,34 +150,21 @@ yline(1e-6, ':', 'LineWidth', 1.5, 'Color', [0.7, 0, 0], ...
       'DisplayName', '终止容差 (10^{-6})');
 
 % 论文标准绘图设置
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 11);
+set(gca, 'FontName', 'SimHei', 'FontSize', 11);
 set(gca, 'LineWidth', 1.2);
 grid on; box on;
 
-xlabel('迭代次数', 'FontSize', 13, 'FontWeight', 'bold');
-ylabel('归一化代价函数 J/J_0', 'FontSize', 13, 'FontWeight', 'bold');
-title('(b) 代价函数下降轨迹', 'FontSize', 13, 'FontWeight', 'bold');
+xlabel('迭代次数', 'FontSize', 13, 'FontName', 'SimHei', 'FontWeight', 'bold');
+ylabel('归一化代价函数 J/J_0', 'FontSize', 13, 'FontName', 'SimHei', 'FontWeight', 'bold');
+title('(b) 代价函数下降轨迹', 'FontSize', 13, 'FontName', 'SimHei', 'FontWeight', 'bold');
 legend('Location', 'northeast', 'FontSize', 9);
 xlim([0, 20]);
 ylim([1e-7, 10]);
 
 % 总标题
-sgtitle('图 4-5 LM算法参数收敛轨迹', 'FontSize', 15, 'FontWeight', 'bold');
+sgtitle('图 4-5 LM算法参数收敛轨迹', 'FontSize', 15, 'FontName', 'SimHei', 'FontWeight', 'bold');
 
-%% 4. 保存图表
-% 确保输出目录存在
-output_dir = '../final_output/figures/';
-if ~exist(output_dir, 'dir')
-    mkdir(output_dir);
-end
-
-% 保存为 PNG（高分辨率）
-print('-dpng', '-r300', [output_dir, '图4-5_LM收敛轨迹.png']);
-
-% 保存为 SVG（矢量图，用于排版）
-print('-dsvg', [output_dir, '图4-5_LM收敛轨迹.svg']);
-
-fprintf('图 4-5 已保存至 %s\n', output_dir);
+fprintf('图 4-5 生成完成！\n');
 fprintf('\n收敛特征验证：\n');
 fprintf('  - 初始值: f_p^(0) = %.2f GHz (偏离 %.2f%%)\n', ...
         f_p_initial_GHz, initial_error_percent);

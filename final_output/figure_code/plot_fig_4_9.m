@@ -75,16 +75,12 @@ plot([0.5 0.5], [0 0.72], 'g:', 'LineWidth', 1.2, 'HandleVisibility', 'off');
 plot([1.5 1.5], [0 0.85], 'm:', 'LineWidth', 1.2, 'HandleVisibility', 'off');
 
 xlabel('\nu_e^{fix} / \nu_e^{true}', 'FontSize', 13, 'Interpreter', 'tex');
-ylabel('平均反演误差(%)', 'FontSize', 13);
-title('图4-9 碰撞频率失配鲁棒性测试', 'FontSize', 14, 'FontWeight', 'bold');
+ylabel('平均反演误差(%)', 'FontSize', 13, 'FontName', 'SimHei');
+title('图4-9 碰撞频率失配鲁棒性测试', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 legend('Location', 'best', 'FontSize', 10);
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
+set(gca, 'FontName', 'SimHei', 'FontSize', 12);
 grid on; box on;
 xlim([0.3 1.7]);
 ylim([0 1.5]);
 
-%% 4. 保存图表
-print('-dpng', '-r300', 'final_output/figures/图4-9_碰撞频率失配鲁棒性.png');
-print('-dsvg', 'final_output/figures/图4-9_碰撞频率失配鲁棒性.svg');
-
-fprintf('图 4-9 已保存至 final_output/figures/\n');
+fprintf('图 4-9 生成完成！\n');

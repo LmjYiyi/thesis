@@ -82,15 +82,15 @@ plot(fp_vec(idx_end)/1e9, B_max_vec(idx_end), 'ms', ...
 % 添加文本注释
 text(fp_vec(idx_start)/1e9 + 0.5, B_max_vec(idx_start) + 0.3, ...
     sprintf('B_{max} ≈ %.1f GHz', B_max_vec(idx_start)), ...
-    'FontSize', 11, 'FontName', 'Times New Roman', 'Color', 'r');
+    'FontSize', 11, 'FontName', 'SimHei', 'Color', 'r');
 text(fp_vec(idx_end)/1e9 - 2, B_max_vec(idx_end) + 0.5, ...
     sprintf('B_{max} ≈ %.1f GHz', B_max_vec(idx_end)), ...
-    'FontSize', 11, 'FontName', 'Times New Roman', 'Color', 'm');
+    'FontSize', 11, 'FontName', 'SimHei', 'Color', 'm');
 
 % 添加下降幅度标注
 drop_ratio = (B_max_vec(idx_start) - B_max_vec(idx_end)) / B_max_vec(idx_start) * 100;
 text(25, 5, sprintf('下降幅度: %.0f%%', drop_ratio), ...
-    'FontSize', 12, 'FontName', 'Times New Roman', ...
+    'FontSize', 12, 'FontName', 'SimHei', ...
     'BackgroundColor', [1 1 0.9], 'EdgeColor', 'k', 'LineWidth', 1);
 
 % 添加阴影区域标注
@@ -100,14 +100,14 @@ fill([fp_vec/1e9, fliplr(fp_vec/1e9)], ...
      [B_max_vec', zeros(1, length(B_max_vec))], ...
      [0.7 1 0.7], 'FaceAlpha', 0.2, 'EdgeColor', 'none', ...
      'DisplayName', '传统FFT适用区 (B·η·τ₀ ≤ 1)');
-text(22, 1, '传统FFT适用区', 'FontSize', 11, 'Color', [0 0.5 0], 'FontWeight', 'bold');
+text(22, 1, '传统FFT适用区', 'FontSize', 11, 'Color', [0 0.5 0], 'FontName', 'SimHei', 'FontWeight', 'bold');
 
 % 坐标轴设置
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 12, 'LineWidth', 1.2);
-xlabel('截止频率 f_p (GHz)', 'FontSize', 14, 'FontWeight', 'bold');
-ylabel('允许带宽 B_{max} (GHz)', 'FontSize', 14, 'FontWeight', 'bold');
+set(gca, 'FontName', 'SimHei', 'FontSize', 12, 'LineWidth', 1.2);
+xlabel('截止频率 f_p (GHz)', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
+ylabel('允许带宽 B_{max} (GHz)', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 title('图 3-7 Ka波段诊断场景下允许带宽与截止频率的参数空间映射', ...
-    'FontSize', 14, 'FontWeight', 'bold');
+    'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 
 % 设置坐标轴范围
 xlim([19 31]);
@@ -116,17 +116,8 @@ ylim([0 10]);
 % 添加图例
 legend('show', 'Location', 'northeast', 'FontSize', 10);
 
-%% 4. 保存图表
-% 保存为 PNG(高分辨率,用于Word插入)
-print('-dpng', '-r300', ...
-    '/Users/mac/Desktop/lunwx/.agent/workflows/final_output/figures/图3-7_允许带宽与截止频率参数空间.png');
-
-% 保存为 SVG(矢量图,用于LaTeX排版)
-print('-dsvg', ...
-    '/Users/mac/Desktop/lunwx/.agent/workflows/final_output/figures/图3-7_允许带宽与截止频率参数空间.svg');
-
-fprintf('图 3-7 已保存至 final_output/figures/\n');
-fprintf('曲线特征验证:\n');
+fprintf('图 3-7 生成完成！\n');
+fprintf('曲线特征验证：\n');
 fprintf('  起点 (fp=20GHz): B_max = %.2f GHz\n', B_max_vec(idx_start));
 fprintf('  终点 (fp=30GHz): B_max = %.2f GHz\n', B_max_vec(idx_end));
 fprintf('  下降幅度: %.1f%% (文档要求 >75%%)\n', drop_ratio);

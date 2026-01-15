@@ -71,9 +71,9 @@ for i = 1:length(ne_scales)
 end
 
 %% 6. 图表标注与格式设置
-xlabel('探测频率 (GHz)', 'FontSize', 14, 'FontName', 'Times New Roman', 'FontWeight', 'bold');
-ylabel('群时延 (ns)', 'FontSize', 14, 'FontName', 'Times New Roman', 'FontWeight', 'bold');
-title('图 3-3a 电子密度对群时延曲线的拓扑控制', 'FontSize', 14, 'FontWeight', 'bold');
+xlabel('探测频率 (GHz)', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
+ylabel('群时延 (ns)', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
+title('图 3-3a 电子密度对群时延曲线的拓扑控制', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 
 % 自动适应数据范围
 axis tight;
@@ -82,26 +82,10 @@ yl = ylim; ylim([yl(1)*0.95, yl(2)*1.05]); % 稍微留点边距
 legend(legend_str, 'Location', 'Best', 'FontSize', 12);
 
 % 设置图表样式
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
+set(gca, 'FontName', 'SimHei', 'FontSize', 12);
 set(gca, 'LineWidth', 1.2);
 box on;
 
-%% 7. 保存图表
-% 确保输出目录存在
-output_dir = '/Users/mac/Desktop/lunwx/.agent/workflows/final_output/figures';
-if ~exist(output_dir, 'dir')
-    mkdir(output_dir);
-end
-
-% 保存为 PNG（高分辨率,用于Word/预览）
-print('-dpng', '-r300', fullfile(output_dir, '第3章_图3-3a_电子密度主导性.png'));
-
-% 保存为 SVG（矢量图,用于LaTeX排版）
-print('-dsvg', fullfile(output_dir, '第3章_图3-3a_电子密度主导性.svg'));
-
-fprintf('图 3-3a 已保存至 %s\n', output_dir);
-fprintf('- PNG: 第3章_图3-3a_电子密度主导性.png (300 DPI)\n');
-fprintf('- SVG: 第3章_图3-3a_电子密度主导性.svg (矢量)\n');
 
 %% 8. 物理模型计算函数(与 nue.m 第127-152行一致)
 function [tau_g, mag_dB] = calculate_drude_response(omega, ne, nu, d, c, eps0, me, e)

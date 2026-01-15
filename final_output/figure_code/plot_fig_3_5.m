@@ -103,13 +103,13 @@ for idx = 1:3
     plot(f_fft/1e6, spectra{idx}, 'Color', colors(idx,:), 'LineWidth', 1.5);
     
     % 图表设置
-    set(gca, 'FontName', 'Times New Roman', 'FontSize', 10);
+    set(gca, 'FontName', 'SimHei', 'FontSize', 10);
     set(gca, 'LineWidth', 1.0);
     grid on; box on;
     
-    xlabel('差频频率 f_D / MHz', 'FontSize', 11);
-    ylabel('归一化幅度', 'FontSize', 11);
-    title(case_labels{idx}, 'FontSize', 11, 'FontWeight', 'bold');
+    xlabel('差频频率 f_D / MHz', 'FontSize', 11, 'FontName', 'SimHei');
+    ylabel('归一化幅度', 'FontSize', 11, 'FontName', 'SimHei');
+    title(case_labels{idx}, 'FontSize', 11, 'FontName', 'SimHei', 'FontWeight', 'bold');
     
     % 设置合理的X轴范围（聚焦在主瓣附近）
     xlim([0 20]);
@@ -138,17 +138,9 @@ for idx = 1:3
 end
 
 % 总标题
-sgtitle('图 3-5 差频信号频谱散焦效应', 'FontSize', 14, 'FontWeight', 'bold');
+sgtitle('图 3-5 差频信号频谱散焦效应', 'FontSize', 14, 'FontName', 'SimHei', 'FontWeight', 'bold');
 
-%% 4. 保存图表
-
-% 保存为 PNG（高分辨率）
-print('-dpng', '-r300', '../figures/图3-5_频谱散焦效应.png');
-
-% 保存为 SVG（矢量图）
-print('-dsvg', '../figures/图3-5_频谱散焦效应.svg');
-
-fprintf('图 3-5 已保存至 final_output/figures/\n');
+fprintf('图 3-5 生成完成！\n');
 fprintf('三种色散情况的频谱特征：\n');
 fprintf('  (a) 无色散: 尖锐单峰\n');
 fprintf('  (b) 弱色散 (f_p=25 GHz): 轻微展宽\n');
