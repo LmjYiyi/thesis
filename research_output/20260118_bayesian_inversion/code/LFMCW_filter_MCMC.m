@@ -379,10 +379,12 @@ legend('Location', 'northeast');
 xlim([f_start/1e9, f_end/1e9]);
 grid on;
 
-%% 9. 三参数LM反演
+%% 9. 三参数 MCMC 反演 (替换 LM)
 
 fprintf('\n=============================================\n');
-fprintf('开始三参数反演 (Weighted LM Algorithm)...\n');
+fprintf('开始三参数反演 (MCMC Metropolis-Hastings Algorithm)...\n');
+fprintf('优势：无需初始值猜测，自动量化 N 的不确定性\n');
+fprintf('=============================================\n');
 
 % 数据筛选
 fit_mask = (feature_f_probe >= f_start + 0.05*B_sweep) & ...
@@ -406,111 +408,313 @@ Weights = Weights / max(Weights);
 
 fprintf('有效数据点: %d\n', length(X_fit));
 
-% =========================================================================
-% 初始值策略（智能版 - 基于数据特征提取）
-% 参考LM.m的哲学：从物理特征中提取先验信息
-% =========================================================================
+% 测量噪声估计
+sigma_meas = 0.05e-9;
 
-% 1. F0猜测：使用测量数据的"峰值位置"
-[~, peak_idx] = max(Y_fit);  % 找到群时延最大的点
-F0_guess = 0.3 *X_fit(peak_idx);  % 该点即为近似中心频率 
+% =========================================================================
+% MCMC 参数设置
+% =========================================================================
+N_samples = 10000;
+burn_in = 2000;
 
-% 2. BW猜测：基于半高宽（FWHM）估计
-half_max = 0.2 *max(Y_fit) / 2;
-idx_above_half = find(Y_fit >= half_max);
-if length(idx_above_half) >= 2
-    BW_guess = 2 * (X_fit(idx_above_half(end)) - X_fit(idx_above_half(1)));
+% 先验分布范围
+% 参数1: F0 (中心频率) - 范围 11-17 GHz
+F0_min = 11e9; F0_max = 17e9;
+
+% 参数2: BW (带宽) - 范围 4-12 GHz
+BW_min = 4e9; BW_max = 12e9;
+
+% 参数3: N (阶数) - 范围 1.5-10 (连续值,后取整)
+N_min = 1.5; N_max = 10;
+
+% 提议分布步长
+sigma_F0 = (F0_max - F0_min) * 0.015;
+sigma_BW = (BW_max - BW_min) * 0.02;
+sigma_N = (N_max - N_min) * 0.03;
+
+% =========================================================================
+% 初始化 (从先验分布随机采样)
+% =========================================================================
+rng(42);
+F0_current = F0_min + (F0_max - F0_min) * rand();
+BW_current = BW_min + (BW_max - BW_min) * rand();
+N_current = N_min + (N_max - N_min) * rand();
+
+fprintf('MCMC 初始点（随机采样自先验）:\n');
+fprintf('  F0 = %.3f GHz\n', F0_current/1e9);
+fprintf('  BW = %.3f GHz\n', BW_current/1e9);
+fprintf('  N = %.2f\n', N_current);
+
+% 计算初始对数似然
+logL_current = compute_log_likelihood_filter(X_fit, Y_fit, Weights, F0_current, BW_current, N_current, sigma_meas);
+
+% 存储采样结果
+samples_F0 = zeros(N_samples, 1);
+samples_BW = zeros(N_samples, 1);
+samples_N = zeros(N_samples, 1);
+samples_logL = zeros(N_samples, 1);
+accept_count = 0;
+
+% =========================================================================
+% MCMC 主循环
+% =========================================================================
+hWait = waitbar(0, 'MCMC 采样中...');
+
+for i = 1:N_samples
+    % 提议新参数
+    F0_proposed = F0_current + sigma_F0 * randn();
+    BW_proposed = BW_current + sigma_BW * randn();
+    N_proposed = N_current + sigma_N * randn();
+    
+    % 先验约束检查
+    if F0_proposed < F0_min || F0_proposed > F0_max || ...
+       BW_proposed < BW_min || BW_proposed > BW_max || ...
+       N_proposed < N_min || N_proposed > N_max
+        samples_F0(i) = F0_current;
+        samples_BW(i) = BW_current;
+        samples_N(i) = N_current;
+        samples_logL(i) = logL_current;
+        continue;
+    end
+    
+    % 计算提议点的对数似然
+    logL_proposed = compute_log_likelihood_filter(X_fit, Y_fit, Weights, F0_proposed, BW_proposed, N_proposed, sigma_meas);
+    
+    % Metropolis-Hastings 接受概率
+    log_alpha = logL_proposed - logL_current;
+    
+    if log(rand()) < log_alpha
+        F0_current = F0_proposed;
+        BW_current = BW_proposed;
+        N_current = N_proposed;
+        logL_current = logL_proposed;
+        accept_count = accept_count + 1;
+    end
+    
+    samples_F0(i) = F0_current;
+    samples_BW(i) = BW_current;
+    samples_N(i) = N_current;
+    samples_logL(i) = logL_current;
+    
+    if mod(i, 500) == 0
+        waitbar(i/N_samples, hWait, sprintf('MCMC 采样中... %.0f%%', i/N_samples*100));
+    end
+end
+close(hWait);
+
+% =========================================================================
+% 后验分析
+% =========================================================================
+fprintf('\n===== MCMC 采样完成 =====\n');
+fprintf('总采样数: %d, 预烧期: %d, 有效样本: %d\n', N_samples, burn_in, N_samples - burn_in);
+fprintf('接受率: %.2f%% (理想范围: 20-50%%)\n', accept_count/N_samples*100);
+
+% 丢弃预烧期
+samples_F0_valid = samples_F0(burn_in+1:end);
+samples_BW_valid = samples_BW(burn_in+1:end);
+samples_N_valid = samples_N(burn_in+1:end);
+
+% 后验统计
+F0_mean = mean(samples_F0_valid);
+F0_std = std(samples_F0_valid);
+F0_ci = prctile(samples_F0_valid, [2.5, 97.5]);
+
+BW_mean = mean(samples_BW_valid);
+BW_std = std(samples_BW_valid);
+BW_ci = prctile(samples_BW_valid, [2.5, 97.5]);
+
+N_mean = mean(samples_N_valid);
+N_std = std(samples_N_valid);
+N_ci = prctile(samples_N_valid, [2.5, 97.5]);
+
+fprintf('\n--- 后验分布统计 ---\n');
+fprintf('F0:\n');
+fprintf('  真值:     %.4f GHz\n', F0_true/1e9);
+fprintf('  后验均值: %.4f GHz\n', F0_mean/1e9);
+fprintf('  后验标准差: %.4f GHz\n', F0_std/1e9);
+fprintf('  95%% CI:   [%.4f, %.4f] GHz\n', F0_ci(1)/1e9, F0_ci(2)/1e9);
+fprintf('  相对误差: %.2f%%\n', (F0_mean - F0_true)/F0_true * 100);
+
+fprintf('\nBW:\n');
+fprintf('  真值:     %.4f GHz\n', BW_true/1e9);
+fprintf('  后验均值: %.4f GHz\n', BW_mean/1e9);
+fprintf('  后验标准差: %.4f GHz\n', BW_std/1e9);
+fprintf('  95%% CI:   [%.4f, %.4f] GHz\n', BW_ci(1)/1e9, BW_ci(2)/1e9);
+fprintf('  相对误差: %.2f%%\n', (BW_mean - BW_true)/BW_true * 100);
+
+fprintf('\nN:\n');
+fprintf('  真值:     %.1f\n', N_true);
+fprintf('  后验均值: %.2f\n', N_mean);
+fprintf('  后验标准差: %.2f\n', N_std);
+fprintf('  95%% CI:   [%.2f, %.2f]\n', N_ci(1), N_ci(2));
+fprintf('  整数取值: %d\n', round(N_mean));
+
+% 关键结论
+fprintf('\n===== 不确定性分析结论 =====\n');
+cv_F0 = F0_std / F0_mean;
+cv_BW = BW_std / BW_mean;
+cv_N = N_std / N_mean;
+fprintf('F0 变异系数 (CV): %.4f%% → 高精度可观测\n', cv_F0*100);
+fprintf('BW 变异系数 (CV): %.2f%% → ', cv_BW*100);
+if cv_BW > 0.1
+    fprintf('中等精度\n');
 else
-    BW_guess = 1.2 * (max(X_fit) - min(X_fit));  % 回退策略
+    fprintf('高精度可观测\n');
+end
+fprintf('N 变异系数 (CV): %.2f%% → ', cv_N*100);
+if cv_N > 0.2
+    fprintf('低精度，建议固定此参数\n');
+else
+    fprintf('可观测\n');
 end
 
-% 3. N猜测：基于边缘陡峭度估计
-% 滤波器越高阶，边缘越陡
-edge_points = Y_fit(Y_fit < 0.3*max(Y_fit));
-if ~isempty(edge_points)
-    edge_slope = std(edge_points);  % 边缘波动越小，阶数越高
-    N_guess = round(3 + 2/edge_slope);  % 简化启发式
-    N_guess = max(2, min(N_guess, 8));  % 限制范围[2,8]
-else
-    N_guess = 4;  % 回退策略
-end
+% =========================================================================
+% 可视化
+% =========================================================================
 
-fprintf('智能初始猜测: F0=%.2fGHz, BW=%.2fGHz, N=%d\n', ...
-    F0_guess/1e9, BW_guess/1e9, N_guess);
-
-% 归一化
-scale_F0 = 1e10;
-scale_BW = 1e10;
-scale_N = 1;
-param_init = [F0_guess/scale_F0, BW_guess/scale_BW, N_guess/scale_N];
-
-% 残差函数
-ResidualFunc = @(p) WeightedResiduals_Filter3P(...
-    p, scale_F0, scale_BW, scale_N, X_fit, Y_fit, Weights);
-
-% 优化
-options = optimoptions('lsqnonlin', 'Algorithm', 'levenberg-marquardt', ...
-    'Display', 'iter', ...
-    'StepTolerance', 1e-10, ...
-    'FunctionTolerance', 1e-10, ...
-    'DiffMinChange', 0.001, ...
-    'MaxIterations', 200);
-
-[param_opt, ~, ~, exitflag] = lsqnonlin(ResidualFunc, param_init, [], [], options);
-
-F0_opt = param_opt(1) * scale_F0;
-BW_opt = param_opt(2) * scale_BW;
-N_opt = param_opt(3) * scale_N;
-
-%% 10. 结果输出
-
-fprintf('\n===== 三参数反演结果 =====\n');
-fprintf('真实值: F0=%.4fGHz, BW=%.4fGHz, N=%.1f\n', F0_true/1e9, BW_true/1e9, N_true);
-fprintf('反演值: F0=%.4fGHz, BW=%.4fGHz, N=%.2f\n', F0_opt/1e9, BW_opt/1e9, N_opt);
-
-err_F0 = (F0_opt - F0_true)/F0_true*100;
-err_BW = (BW_opt - BW_true)/BW_true*100;
-err_N = (N_opt - N_true)/N_true*100;
-
-fprintf('相对误差: F0=%.2f%%, BW=%.2f%%, N=%.2f%%\n', err_F0, err_BW, err_N);
-fprintf('整数阶数: N=%d\n', round(N_opt));
-fprintf('===========================\n');
-
-%% 11. 可视化拟合结果（Figure 6）
-
+% Figure 6: Trace plots
 figure(6); clf;
-set(gcf, 'Color', 'w', 'Position', [100 100 900 700]);
+set(gcf, 'Color', 'w', 'Position', [100 100 1200 600]);
 
-subplot(3,1,1);
-scatter(X_fit/1e9, Y_fit*1e9, 30, Weights, 'filled');
-colormap(jet); colorbar; ylabel(colorbar, '权重', 'FontName', 'SimHei');
+subplot(2,3,1);
+plot(samples_F0/1e9, 'b', 'LineWidth', 0.5);
 hold on;
-plot(f_theory/1e9, tau_theory*1e9, 'r--', 'LineWidth', 1.5, 'DisplayName', '真实曲线');
-tau_fit = calculate_filter_group_delay(f_theory, F0_opt, BW_opt, N_opt);
-plot(f_theory/1e9, tau_fit*1e9, 'g-', 'LineWidth', 2.5, 'DisplayName', '反演曲线');
-xlabel('频率 (GHz)', 'FontName', 'SimHei');
-ylabel('群时延 (ns)', 'FontName', 'SimHei');
-title_str = sprintf('Figure 6: 反演结果 | F0误差:%.2f%%, BW误差:%.2f%%, N误差:%.2f%%', err_F0, err_BW, err_N);
-title(title_str, 'FontName', 'SimHei');
-legend('测量数据', '真实曲线', '反演曲线', 'Location', 'northeast');
+yline(F0_true/1e9, 'r--', 'LineWidth', 2);
+xline(burn_in, 'k--', 'Burn-in');
+xlabel('迭代次数'); ylabel('F_0 (GHz)');
+title('(a) F_0 Trace Plot'); grid on;
+
+subplot(2,3,2);
+plot(samples_BW/1e9, 'b', 'LineWidth', 0.5);
+hold on;
+yline(BW_true/1e9, 'r--', 'LineWidth', 2);
+xline(burn_in, 'k--', 'Burn-in');
+xlabel('迭代次数'); ylabel('BW (GHz)');
+title('(b) BW Trace Plot'); grid on;
+
+subplot(2,3,3);
+plot(samples_N, 'b', 'LineWidth', 0.5);
+hold on;
+yline(N_true, 'r--', 'LineWidth', 2);
+xline(burn_in, 'k--', 'Burn-in');
+xlabel('迭代次数'); ylabel('N');
+title('(c) N Trace Plot'); grid on;
+
+subplot(2,3,4);
+histogram(samples_F0_valid/1e9, 50, 'Normalization', 'pdf', 'FaceColor', [0.2 0.6 0.8]);
+hold on;
+xline(F0_true/1e9, 'r--', 'LineWidth', 2);
+xline(F0_ci(1)/1e9, 'k--'); xline(F0_ci(2)/1e9, 'k--');
+xlabel('F_0 (GHz)'); ylabel('概率密度');
+title('(d) F_0 后验分布'); grid on;
+
+subplot(2,3,5);
+histogram(samples_BW_valid/1e9, 50, 'Normalization', 'pdf', 'FaceColor', [0.4 0.8 0.4]);
+hold on;
+xline(BW_true/1e9, 'r--', 'LineWidth', 2);
+xline(BW_ci(1)/1e9, 'k--'); xline(BW_ci(2)/1e9, 'k--');
+xlabel('BW (GHz)'); ylabel('概率密度');
+title('(e) BW 后验分布'); grid on;
+
+subplot(2,3,6);
+histogram(samples_N_valid, 50, 'Normalization', 'pdf', 'FaceColor', [0.8 0.4 0.2]);
+hold on;
+xline(N_true, 'r--', 'LineWidth', 2);
+xline(N_ci(1), 'k--'); xline(N_ci(2), 'k--');
+xlabel('N (阶数)'); ylabel('概率密度');
+title('(f) N 后验分布'); grid on;
+
+sgtitle('Butterworth滤波器 MCMC 参数反演结果', 'FontSize', 14, 'FontWeight', 'bold');
+
+% Figure 7: Corner Plot (三参数)
+figure(7); clf;
+set(gcf, 'Color', 'w', 'Position', [150 150 900 900]);
+
+% 主对角线: 边缘分布
+subplot(3,3,1);
+histogram(samples_F0_valid/1e9, 40, 'Normalization', 'pdf', 'FaceColor', [0.2 0.6 0.8]);
+xline(F0_true/1e9, 'r--', 'LineWidth', 2);
+ylabel('PDF'); title('F_0');
+
+subplot(3,3,5);
+histogram(samples_BW_valid/1e9, 40, 'Normalization', 'pdf', 'FaceColor', [0.4 0.8 0.4]);
+xline(BW_true/1e9, 'r--', 'LineWidth', 2);
+ylabel('PDF'); title('BW');
+
+subplot(3,3,9);
+histogram(samples_N_valid, 40, 'Normalization', 'pdf', 'FaceColor', [0.8 0.4 0.2]);
+xline(N_true, 'r--', 'LineWidth', 2);
+xlabel('N'); ylabel('PDF'); title('N');
+
+% 下三角: 联合分布
+subplot(3,3,4);
+scatter(samples_F0_valid(1:20:end)/1e9, samples_BW_valid(1:20:end)/1e9, 5, 'b', 'filled', 'MarkerFaceAlpha', 0.3);
+hold on; plot(F0_true/1e9, BW_true/1e9, 'r+', 'MarkerSize', 15, 'LineWidth', 3);
+xlabel('F_0 (GHz)'); ylabel('BW (GHz)');
 grid on;
 
-subplot(3,1,2);
-residuals = Y_fit - calculate_filter_group_delay(X_fit, F0_opt, BW_opt, N_opt);
-stem(X_fit/1e9, residuals*1e9, 'b', 'MarkerSize', 2);
-xlabel('频率 (GHz)', 'FontName', 'SimHei');
-ylabel('残差 (ns)', 'FontName', 'SimHei');
-title('残差分布', 'FontName', 'SimHei');
-grid on; yline(0, 'r--');
+subplot(3,3,7);
+scatter(samples_F0_valid(1:20:end)/1e9, samples_N_valid(1:20:end), 5, 'b', 'filled', 'MarkerFaceAlpha', 0.3);
+hold on; plot(F0_true/1e9, N_true, 'r+', 'MarkerSize', 15, 'LineWidth', 3);
+xlabel('F_0 (GHz)'); ylabel('N');
+grid on;
 
-subplot(3,1,3);
-plot(X_fit/1e9, Weights, 'k-', 'LineWidth', 1.5);
-xlabel('频率 (GHz)', 'FontName', 'SimHei');
-ylabel('归一化权重', 'FontName', 'SimHei');
-title('权重分布', 'FontName', 'SimHei');
-grid on; ylim([0 1.1]);
+subplot(3,3,8);
+scatter(samples_BW_valid(1:20:end)/1e9, samples_N_valid(1:20:end), 5, 'b', 'filled', 'MarkerFaceAlpha', 0.3);
+hold on; plot(BW_true/1e9, N_true, 'r+', 'MarkerSize', 15, 'LineWidth', 3);
+xlabel('BW (GHz)'); ylabel('N');
+grid on;
 
-fprintf('\n仿真完成！\n');
+% 上三角: 相关系数
+subplot(3,3,2);
+corr_F0_BW = corrcoef(samples_F0_valid, samples_BW_valid);
+text(0.5, 0.5, sprintf('ρ(F_0,BW)\n= %.3f', corr_F0_BW(1,2)), 'HorizontalAlignment', 'center', 'FontSize', 14);
+axis off;
+
+subplot(3,3,3);
+corr_F0_N = corrcoef(samples_F0_valid, samples_N_valid);
+text(0.5, 0.5, sprintf('ρ(F_0,N)\n= %.3f', corr_F0_N(1,2)), 'HorizontalAlignment', 'center', 'FontSize', 14);
+axis off;
+
+subplot(3,3,6);
+corr_BW_N = corrcoef(samples_BW_valid, samples_N_valid);
+text(0.5, 0.5, sprintf('ρ(BW,N)\n= %.3f', corr_BW_N(1,2)), 'HorizontalAlignment', 'center', 'FontSize', 14);
+axis off;
+
+sgtitle('Butterworth滤波器 Corner Plot: F_0 vs BW vs N', 'FontSize', 14, 'FontWeight', 'bold');
+
+% Figure 8: 拟合验证
+figure(8); clf;
+set(gcf, 'Color', 'w', 'Position', [200 200 900 500]);
+
+scatter(X_fit/1e9, Y_fit*1e9, 30, Weights, 'filled'); 
+colorbar; ylabel(colorbar, '权重');
+hold on;
+
+tau_fit = calculate_filter_group_delay(f_theory, F0_mean, BW_mean, N_mean);
+plot(f_theory/1e9, tau_fit*1e9, 'r', 'LineWidth', 2.5);
+plot(f_theory/1e9, tau_theory*1e9, 'g--', 'LineWidth', 1.5);
+
+% 95% 置信带
+n_curves = 100;
+idx_sample = randperm(length(samples_F0_valid), min(n_curves, length(samples_F0_valid)));
+for k = 1:length(idx_sample)
+    tau_k = calculate_filter_group_delay(f_theory, samples_F0_valid(idx_sample(k)), ...
+                                          samples_BW_valid(idx_sample(k)), samples_N_valid(idx_sample(k)));
+    plot(f_theory/1e9, tau_k*1e9, 'Color', [0.8 0.8 0.8, 0.2], 'LineWidth', 0.5);
+end
+
+plot(f_theory/1e9, tau_fit*1e9, 'r', 'LineWidth', 2.5);
+
+err_F0 = (F0_mean - F0_true)/F0_true*100;
+err_BW = (BW_mean - BW_true)/BW_true*100;
+title(sprintf('MCMC拟合结果 | F_0误差:%.2f%%, BW误差:%.2f%%, N=%.1f', err_F0, err_BW, N_mean)); 
+xlabel('频率 (GHz)'); ylabel('群时延 (ns)'); grid on;
+legend('测量数据', '后验均值曲线', '真实曲线', '95%置信带', 'Location', 'best');
+xlim([f_start/1e9, f_end/1e9]);
+
+fprintf('\n绘图完成: Figure 6 (Trace), Figure 7 (Corner), Figure 8 (Fit)\n');
+fprintf('仿真完成！\n');
 
 %% 局部函数
 
@@ -569,34 +773,37 @@ function tau_est = esprit_extract(x_window, win_len, L_sub, f_s_proc, K)
     tau_est = f_beat_est / K;
 end
 
-function F_vec = WeightedResiduals_Filter3P(p_scaled, scale_F0, scale_BW, scale_N, f_data, tau_data, weights)
-    F0_val = p_scaled(1) * scale_F0;
-    BW_val = p_scaled(2) * scale_BW;
-    N_val = p_scaled(3) * scale_N;
+function logL = compute_log_likelihood_filter(f_data, tau_data, weights, F0_val, BW_val, N_val, sigma)
+    % 计算 Butterworth 滤波器模型的加权对数似然函数
     
+    % 物理约束检查
     if F0_val <= 0 || BW_val <= 0 || N_val <= 0.5
-        F_vec = ones(size(f_data)) * 1e5;
-        return;
+        logL = -1e10; return;
     end
     
     if F0_val < min(f_data)*0.5 || F0_val > max(f_data)*1.5
-        F_vec = ones(size(f_data)) * 1e5;
-        return;
+        logL = -1e10; return;
     end
     
     if BW_val < 1e9 || BW_val > 20e9 || N_val < 1 || N_val > 15
-        F_vec = ones(size(f_data)) * 1e5;
-        return;
+        logL = -1e10; return;
     end
     
     try
+        % 计算理论时延
         tau_theory = calculate_filter_group_delay(f_data, F0_val, BW_val, N_val);
-        F_vec = sqrt(weights) .* (tau_theory - tau_data) * 1e9;
         
-        if any(isnan(F_vec)) || any(isinf(F_vec))
-            F_vec = ones(size(f_data)) * 1e5;
+        % 加权残差
+        residuals = (tau_theory - tau_data) / sigma;
+        
+        % 对数似然 (高斯噪声模型)
+        logL = -0.5 * sum(weights .* residuals.^2);
+        
+        % 检查 NaN
+        if isnan(logL) || isinf(logL)
+            logL = -1e10;
         end
     catch
-        F_vec = ones(size(f_data)) * 1e5;
+        logL = -1e10;
     end
 end

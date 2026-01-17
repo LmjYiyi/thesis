@@ -11,13 +11,18 @@ description: MATLAB仿真代码与论文章节的映射参考
 ## 代码目录
 
 ```
-/Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/
-├── LM.m         # 核心反演算法 (第四章)
-├── initial.m    # 传统诊断方法 (对比基线)
-├── nue.m        # 参数敏感性分析 (3.2.3节)
-├── lianghua.m   # 工程判据可视化 (3.1.3/3.4.2节)
-├── test.m       # 二阶小量验证 (3.3.3节)
-└── README.md    # 代码文档说明
+thesis-code/
+├── LM.m                        # 核心反演算法 - LM点估计 (第四章)
+├── LM_MCMC.m                   # 贝叶斯反演 - Drude模型MCMC (附录)
+├── LM_lorentz.m                # Lorentz超材料反演 - LM算法
+├── LM_lorentz_MCMC.m           # Lorentz超材料反演 - MCMC算法
+├── LFMCW_filter_inversion_FINAL.m  # 滤波器反演 - LM算法
+├── LFMCW_filter_MCMC.m         # 滤波器反演 - MCMC算法
+├── initial.m                   # 传统诊断方法 (对比基线)
+├── nue.m                       # 参数敏感性分析 (3.2.3节)
+├── lianghua.m                  # 工程判据可视化 (3.1.3/3.4.2节)
+├── test.m                      # 二阶小量验证 (3.3.3节)
+└── README.md                   # 代码文档说明
 ```
 
 ---
@@ -25,12 +30,17 @@ description: MATLAB仿真代码与论文章节的映射参考
 ## 代码与论文章节映射
 
 | 代码文件 | 对应论文章节 | 核心功能 | 生成图表 |
-|----------|-------------|----------|---------|
-| [`nue.m`](file:///Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/nue.m) | 3.2.3 参数敏感性分析 | 验证电子密度主导性 + 碰撞频率解耦 | 图 3-3a, 3-3b |
-| [`lianghua.m`](file:///Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/lianghua.m) | 3.1.3 & 3.4.2 | 工程判据 $\xi = B \cdot \eta \cdot \tau_0$ | 工程边界图 |
-| [`test.m`](file:///Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/test.m) | 3.3.3 二阶微扰证明 | 验证 $(\nu_e/\omega)^2$ 是二阶小量 | 敏感度验证图 |
-| [`initial.m`](file:///Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/initial.m) | 2.2 & 5.2 | 传统LFMCW诊断方法仿真 | Figure 1-10 |
-| [`LM.m`](file:///Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/LM.m) | **第四章全部** | 完整反演算法实现 | Figure 9, 11 |
+|----------|-------------|----------|---------| 
+| `nue.m` | 3.2.3 参数敏感性分析 | 验证电子密度主导性 + 碰撞频率解耦 | 图 3-3a, 3-3b |
+| `lianghua.m` | 3.1.3 & 3.4.2 | 工程判据 $\xi = B \cdot \eta \cdot \tau_0$ | 工程边界图 |
+| `test.m` | 3.3.3 二阶微扰证明 | 验证 $(\nu_e/\omega)^2$ 是二阶小量 | 敏感度验证图 |
+| `initial.m` | 2.2 & 5.2 | 传统LFMCW诊断方法仿真 | Figure 1-10 |
+| `LM.m` | **第四章全部** | Drude模型LM点估计反演 | Figure 9, 11 |
+| `LM_MCMC.m` | 附录/4.2验证 | Drude模型MCMC不确定性量化 | Trace/Corner Plot |
+| `LM_lorentz.m` | 5.3 超材料诊断 | Lorentz模型LM反演 | 谐振特性图 |
+| `LM_lorentz_MCMC.m` | 附录 | Lorentz模型MCMC反演 | Corner Plot |
+| `LFMCW_filter_inversion_FINAL.m` | 5.4 滤波器诊断 | Butterworth滤波器LM反演 | Figure 5, 6 |
+| `LFMCW_filter_MCMC.m` | 附录 | Butterworth滤波器MCMC反演 | 3×3 Corner Plot |
 
 ---
 

@@ -365,10 +365,12 @@ xlim([f_start/1e9, f_end/1e9]);
 fprintf('绘图完成。\n');
 fprintf('理论时延计算采用相位求导法:tau = -d(phi)/d(omega) - d/c\n');
 
-%% 9. 参数反演:加权 Levenberg-Marquardt (LM) 算法
+%% 9. 参数反演：Metropolis-Hastings MCMC 算法 (替换 LM)
 
 fprintf('---------------------------------------------\n');
-fprintf('开始参数反演 (Weighted LM Algorithm - Lorentz模型)...\n');
+fprintf('开始参数反演 (MCMC Metropolis-Hastings Algorithm - Lorentz模型)...\n');
+fprintf('优势：无需初始值猜测，自动量化 γ 的不确定性\n');
+fprintf('---------------------------------------------\n');
 
 % -------------------------------------------------------------------------
 % 9.1 数据筛选与准备
@@ -391,143 +393,277 @@ end
 % 权重归一化
 Weights = (W_raw / max(W_raw)).^2; 
 
-% -------------------------------------------------------------------------
-% 9.2 初始值策略
-% -------------------------------------------------------------------------
-% 策略:谐振频率初值设为探测频段中心
-f_res_guess = (f_start + f_end) / 2; 
-gamma_guess = 0.5e9; % 阻尼因子初值
-
-% 参数归一化 (两个参数)
-scale_f_res = 1e10;  % 谐振频率归一化
-scale_gamma = 1e9;   % 阻尼归一化
-param_start_scaled = [f_res_guess/scale_f_res, gamma_guess/scale_gamma]; 
-
-fprintf('优化初始值: f_res = %.2f GHz, gamma = %.2f GHz\n', ...
-        f_res_guess/1e9, gamma_guess/1e9);
+% 测量噪声估计
+sigma_meas = 0.1e-9;
 
 % -------------------------------------------------------------------------
-% 9.3 构造 lsqnonlin 模型
+% 9.2 MCMC 参数设置
 % -------------------------------------------------------------------------
-ResidualFunc = @(p_scaled) WeightedResiduals_Lorentz(p_scaled, ...
-    [scale_f_res, scale_gamma], omega_p_meta, X_fit, Y_fit, Weights, d, c);
+N_samples = 10000;
+burn_in = 2000;
 
-% 设置优化选项
-options = optimoptions('lsqnonlin', 'Algorithm', 'levenberg-marquardt', ...
-    'Display', 'iter', ...
-    'StepTolerance', 1e-6, ...
-    'FunctionTolerance', 1e-6, ...
-    'DiffMinChange', 0.01, ... 
-    'MaxIterations', 50);
+% 先验分布范围
+% 参数1: f_res (谐振频率) - 范围 34-37 GHz
+fres_min = 34e9; fres_max = 37e9;
 
-% 参数边界 (归一化后)
-lb = [0.8*f_start/scale_f_res, 0.01e9/scale_gamma]; % 下界
-ub = [1.2*f_end/scale_f_res, 5e9/scale_gamma];      % 上界
+% 参数2: gamma (阻尼因子) - 范围 0.1-2 GHz
+gamma_min = 0.1e9; gamma_max = 2e9;
 
-% 执行优化
-[param_opt_scaled, resnorm, ~, exitflag] = lsqnonlin(ResidualFunc, param_start_scaled, lb, ub, options);
-
-% 还原物理参数
-f_res_opt = param_opt_scaled(1) * scale_f_res;
-gamma_opt = param_opt_scaled(2) * scale_gamma;
+% 提议分布步长
+sigma_fres = (fres_max - fres_min) * 0.015;  % 谐振频率步长
+sigma_gamma = (gamma_max - gamma_min) * 0.05; % 阻尼步长 (不敏感，用更大步长)
 
 % -------------------------------------------------------------------------
-% 9.4 结果输出
+% 9.3 初始化 (从先验分布随机采样)
 % -------------------------------------------------------------------------
-fprintf('---------------------------------------------\n');
-fprintf('真实谐振频率: %.4f GHz\n', f_res/1e9);
-fprintf('反演谐振频率: %.4f GHz\n', f_res_opt/1e9);
-err_f_res = (f_res_opt - f_res)/f_res * 100;
-fprintf('频率相对误差: %.2f%%\n', err_f_res);
-fprintf('---------------------------------------------\n');
-fprintf('真实阻尼因子: %.4f GHz\n', gamma/1e9);
-fprintf('反演阻尼因子: %.4f GHz\n', gamma_opt/1e9);
-err_gamma = (gamma_opt - gamma)/gamma * 100;
-fprintf('阻尼相对误差: %.2f%%\n', err_gamma);
-fprintf('---------------------------------------------\n');
+rng(42);
+fres_current = fres_min + (fres_max - fres_min) * rand();
+gamma_current = gamma_min + (gamma_max - gamma_min) * rand();
+
+fprintf('MCMC 初始点（随机采样自先验）:\n');
+fprintf('  f_res = %.3f GHz\n', fres_current/1e9);
+fprintf('  gamma = %.3f GHz\n', gamma_current/1e9);
+
+% 计算初始对数似然
+logL_current = compute_log_likelihood_lorentz(X_fit, Y_fit, Weights, fres_current, gamma_current, ...
+                                               sigma_meas, omega_p_meta, d, c);
+
+% 存储采样结果
+samples_fres = zeros(N_samples, 1);
+samples_gamma = zeros(N_samples, 1);
+samples_logL = zeros(N_samples, 1);
+accept_count = 0;
 
 % -------------------------------------------------------------------------
-% 9.5 绘图验证
+% 9.4 MCMC 主循环
 % -------------------------------------------------------------------------
+hWait = waitbar(0, 'MCMC 采样中...');
+
+for i = 1:N_samples
+    % 提议新参数
+    fres_proposed = fres_current + sigma_fres * randn();
+    gamma_proposed = gamma_current + sigma_gamma * randn();
+    
+    % 先验约束检查
+    if fres_proposed < fres_min || fres_proposed > fres_max || ...
+       gamma_proposed < gamma_min || gamma_proposed > gamma_max
+        samples_fres(i) = fres_current;
+        samples_gamma(i) = gamma_current;
+        samples_logL(i) = logL_current;
+        continue;
+    end
+    
+    % 计算提议点的对数似然
+    logL_proposed = compute_log_likelihood_lorentz(X_fit, Y_fit, Weights, fres_proposed, gamma_proposed, ...
+                                                    sigma_meas, omega_p_meta, d, c);
+    
+    % Metropolis-Hastings 接受概率
+    log_alpha = logL_proposed - logL_current;
+    
+    if log(rand()) < log_alpha
+        fres_current = fres_proposed;
+        gamma_current = gamma_proposed;
+        logL_current = logL_proposed;
+        accept_count = accept_count + 1;
+    end
+    
+    samples_fres(i) = fres_current;
+    samples_gamma(i) = gamma_current;
+    samples_logL(i) = logL_current;
+    
+    if mod(i, 500) == 0
+        waitbar(i/N_samples, hWait, sprintf('MCMC 采样中... %.0f%%', i/N_samples*100));
+    end
+end
+close(hWait);
+
+% -------------------------------------------------------------------------
+% 9.5 后验分析
+% -------------------------------------------------------------------------
+fprintf('\n===== MCMC 采样完成 =====\n');
+fprintf('总采样数: %d, 预烧期: %d, 有效样本: %d\n', N_samples, burn_in, N_samples - burn_in);
+fprintf('接受率: %.2f%% (理想范围: 20-50%%)\n', accept_count/N_samples*100);
+
+% 丢弃预烧期
+samples_fres_valid = samples_fres(burn_in+1:end);
+samples_gamma_valid = samples_gamma(burn_in+1:end);
+
+% 后验统计
+fres_mean = mean(samples_fres_valid);
+fres_std = std(samples_fres_valid);
+fres_ci = prctile(samples_fres_valid, [2.5, 97.5]);
+
+gamma_mean = mean(samples_gamma_valid);
+gamma_std = std(samples_gamma_valid);
+gamma_ci = prctile(samples_gamma_valid, [2.5, 97.5]);
+
+fprintf('\n--- 后验分布统计 ---\n');
+fprintf('f_res:\n');
+fprintf('  真值:     %.4f GHz\n', f_res/1e9);
+fprintf('  后验均值: %.4f GHz\n', fres_mean/1e9);
+fprintf('  后验标准差: %.4f GHz\n', fres_std/1e9);
+fprintf('  95%% CI:   [%.4f, %.4f] GHz\n', fres_ci(1)/1e9, fres_ci(2)/1e9);
+fprintf('  相对误差: %.2f%%\n', (fres_mean - f_res)/f_res * 100);
+
+fprintf('\ngamma:\n');
+fprintf('  真值:     %.4f GHz\n', gamma/1e9);
+fprintf('  后验均值: %.4f GHz\n', gamma_mean/1e9);
+fprintf('  后验标准差: %.4f GHz\n', gamma_std/1e9);
+fprintf('  95%% CI:   [%.4f, %.4f] GHz\n', gamma_ci(1)/1e9, gamma_ci(2)/1e9);
+
+% 关键结论
+fprintf('\n===== 不确定性分析结论 =====\n');
+cv_fres = fres_std / fres_mean;
+cv_gamma = gamma_std / gamma_mean;
+fprintf('f_res 变异系数 (CV): %.4f%% → 高精度可观测\n', cv_fres*100);
+fprintf('gamma 变异系数 (CV): %.2f%% → ', cv_gamma*100);
+if cv_gamma > 0.3
+    fprintf('低精度，存在平底谷！建议固定此参数。\n');
+else
+    fprintf('可观测\n');
+end
+
+% -------------------------------------------------------------------------
+% 9.6 可视化
+% -------------------------------------------------------------------------
+
+% Figure 11: Trace plots
 figure(11); clf;
-set(gcf, 'Color', 'w', 'Position', [100 100 800 800]);
+set(gcf, 'Color', 'w', 'Position', [100 100 1000 600]);
 
-subplot(3,1,1);
+subplot(2,2,1);
+plot(samples_fres/1e9, 'b', 'LineWidth', 0.5);
+hold on;
+yline(f_res/1e9, 'r--', 'LineWidth', 2);
+xline(burn_in, 'k--', 'Burn-in');
+xlabel('迭代次数'); ylabel('f_{res} (GHz)');
+title('(a) f_{res} Trace Plot'); grid on;
+legend('采样链', '真值', 'Location', 'best');
+
+subplot(2,2,2);
+plot(samples_gamma/1e9, 'b', 'LineWidth', 0.5);
+hold on;
+yline(gamma/1e9, 'r--', 'LineWidth', 2);
+xline(burn_in, 'k--', 'Burn-in');
+xlabel('迭代次数'); ylabel('\gamma (GHz)');
+title('(b) \gamma Trace Plot'); grid on;
+
+subplot(2,2,3);
+histogram(samples_fres_valid/1e9, 50, 'Normalization', 'pdf', 'FaceColor', [0.2 0.6 0.8]);
+hold on;
+xline(f_res/1e9, 'r--', 'LineWidth', 2);
+xline(fres_ci(1)/1e9, 'k--'); xline(fres_ci(2)/1e9, 'k--');
+xlabel('f_{res} (GHz)'); ylabel('概率密度');
+title('(c) f_{res} 后验分布'); grid on;
+
+subplot(2,2,4);
+histogram(samples_gamma_valid/1e9, 50, 'Normalization', 'pdf', 'FaceColor', [0.8 0.4 0.2]);
+hold on;
+xline(gamma/1e9, 'r--', 'LineWidth', 2);
+xline(gamma_ci(1)/1e9, 'k--'); xline(gamma_ci(2)/1e9, 'k--');
+xlabel('\gamma (GHz)'); ylabel('概率密度');
+title('(d) \gamma 后验分布'); grid on;
+
+sgtitle('Lorentz模型 MCMC 参数反演结果', 'FontSize', 14, 'FontWeight', 'bold');
+
+% Figure 12: Corner Plot
+figure(12); clf;
+set(gcf, 'Color', 'w', 'Position', [150 150 700 600]);
+
+subplot(2,2,1);
+histogram(samples_fres_valid/1e9, 40, 'Normalization', 'pdf', 'FaceColor', [0.2 0.6 0.8]);
+xline(f_res/1e9, 'r--', 'LineWidth', 2);
+xlabel('f_{res} (GHz)'); ylabel('PDF');
+title('f_{res} 边缘分布');
+
+subplot(2,2,4);
+histogram(samples_gamma_valid/1e9, 40, 'Normalization', 'pdf', 'FaceColor', [0.8 0.4 0.2]);
+xline(gamma/1e9, 'r--', 'LineWidth', 2);
+xlabel('\gamma (GHz)'); ylabel('PDF');
+title('\gamma 边缘分布');
+
+subplot(2,2,3);
+scatter(samples_fres_valid(1:10:end)/1e9, samples_gamma_valid(1:10:end)/1e9, 5, 'b', 'filled', 'MarkerFaceAlpha', 0.3);
+hold on;
+plot(f_res/1e9, gamma/1e9, 'r+', 'MarkerSize', 15, 'LineWidth', 3);
+xlabel('f_{res} (GHz)'); ylabel('\gamma (GHz)');
+title('联合后验分布 (Corner Plot)');
+grid on;
+
+subplot(2,2,2);
+corr_val = corrcoef(samples_fres_valid, samples_gamma_valid);
+text(0.5, 0.5, sprintf('相关系数\n\\rho = %.3f', corr_val(1,2)), ...
+    'HorizontalAlignment', 'center', 'FontSize', 16);
+axis off;
+title('参数耦合分析');
+
+sgtitle('Lorentz模型 Corner Plot: f_{res} vs \gamma', 'FontSize', 14, 'FontWeight', 'bold');
+
+% Figure 13: 拟合验证
+figure(13); clf;
+set(gcf, 'Color', 'w', 'Position', [200 200 800 400]);
+
 scatter(X_fit/1e9, Y_fit*1e9, 30, Weights, 'filled'); 
-colorbar; ylabel(colorbar, '权重 (归一化)', 'FontName', 'SimHei');
+colorbar; ylabel(colorbar, '权重');
 hold on;
 
-% 计算拟合曲线
 f_plot = linspace(min(X_fit), max(X_fit), 200);
-tau_plot = calculate_lorentz_delay(f_plot, f_res_opt, gamma_opt, omega_p_meta, d, c);
+tau_plot = calculate_lorentz_delay(f_plot, fres_mean, gamma_mean, omega_p_meta, d, c);
+plot(f_plot/1e9, tau_plot*1e9, 'r', 'LineWidth', 2.5);
+
+% 95% 置信带
+n_curves = 100;
+idx_sample = randperm(length(samples_fres_valid), min(n_curves, length(samples_fres_valid)));
+for k = 1:length(idx_sample)
+    tau_k = calculate_lorentz_delay(f_plot, samples_fres_valid(idx_sample(k)), ...
+                                     samples_gamma_valid(idx_sample(k)), omega_p_meta, d, c);
+    plot(f_plot/1e9, tau_k*1e9, 'Color', [0.8 0.8 0.8, 0.2], 'LineWidth', 0.5);
+end
 
 plot(f_plot/1e9, tau_plot*1e9, 'r', 'LineWidth', 2.5);
-xline(f_res_opt/1e9, 'g--', 'LineWidth', 2);
-title(['加权LM拟合结果 (f_{res}误差: ' sprintf('%.2f%%', err_f_res) ', γ误差: ' sprintf('%.2f%%', err_gamma) ')'], 'FontName', 'SimHei'); 
-ylabel('相对时延 (ns)', 'FontName', 'SimHei'); 
-grid on;
-legend('测量数据 (颜色=权重)', '拟合曲线', '反演谐振频率', 'Location', 'best');
+xline(fres_mean/1e9, 'g--', 'LineWidth', 2);
+
+title(sprintf('MCMC拟合结果 (f_{res}误差: %.2f%%)', (fres_mean - f_res)/f_res * 100)); 
+xlabel('频率 (GHz)'); ylabel('相对时延 (ns)'); grid on;
+legend('测量数据', '后验均值曲线', '95%置信带', '谐振频率', 'Location', 'best');
 xlim([min(X_fit)/1e9 max(X_fit)/1e9]);
 
-subplot(3,1,2);
-plot(X_fit/1e9, Weights, 'k', 'LineWidth', 1.5);
-title('不同频率点的拟合权重分布', 'FontName', 'SimHei'); 
-xlabel('频率 (GHz)', 'FontName', 'SimHei'); 
-ylabel('权重', 'FontName', 'SimHei'); 
-grid on;
-xlim([min(X_fit)/1e9 max(X_fit)/1e9]);
-
-% 新增:理论介电常数实部曲线
-subplot(3,1,3);
-omega_plot = 2*pi*f_plot;
-epsilon_plot = 1 + (omega_p_meta^2) ./ (4*pi^2*f_res_opt^2 - omega_plot.^2 - 1i*2*pi*gamma_opt*omega_plot);
-plot(f_plot/1e9, real(epsilon_plot), 'b', 'LineWidth', 2);
-hold on;
-xline(f_res_opt/1e9, 'g--', 'LineWidth', 2);
-yline(0, 'k--');
-title('反演超材料介电常数实部', 'FontName', 'SimHei');
-xlabel('频率 (GHz)', 'FontName', 'SimHei');
-ylabel('Re(ε_r)', 'FontName', 'SimHei');
-grid on;
-xlim([min(X_fit)/1e9 max(X_fit)/1e9]);
-legend('ε_r实部', '谐振频率', 'Location', 'best');
-
+fprintf('\n绘图完成: Figure 11 (Trace), Figure 12 (Corner), Figure 13 (Fit)\n');
 fprintf('仿真完成!\n');
 
 % =========================================================================
 %  局部函数
 % =========================================================================
 
-function F_vec = WeightedResiduals_Lorentz(params_scaled, scale_factors, wp_meta, f_data, tau_data, weights, d, c)
-    % 1. 还原物理参数
-    f_res_val = params_scaled(1) * scale_factors(1);
-    gamma_val = params_scaled(2) * scale_factors(2);
+function logL = compute_log_likelihood_lorentz(f_data, tau_data, weights, fres_val, gamma_val, sigma, wp_meta, d, c)
+    % 计算 Lorentz 模型的加权对数似然函数
     
-    % 2. 物理约束惩罚
-    if f_res_val <= 0 || gamma_val <= 0
-        F_vec = ones(size(f_data)) * 1e5; 
-        return;
+    % 物理约束检查
+    if fres_val <= 0 || gamma_val <= 0
+        logL = -1e10; return;
     end
     
-    % 检查谐振频率是否在探测范围内
-    if f_res_val < min(f_data)*0.9 || f_res_val > max(f_data)*1.1
-        F_vec = ones(size(f_data)) * 1e5; 
-        return;
+    % 检查谐振频率是否在合理范围
+    if fres_val < min(f_data)*0.8 || fres_val > max(f_data)*1.2
+        logL = -1e10; return;
     end
     
-    % 3. 计算理论值
     try
-        tau_theory = calculate_lorentz_delay(f_data, f_res_val, gamma_val, wp_meta, d, c);
+        % 计算理论时延
+        tau_theory = calculate_lorentz_delay(f_data, fres_val, gamma_val, wp_meta, d, c);
         
-        % 4. 计算加权残差向量 (直接拟合，无归一化)
-        F_vec = sqrt(weights) .* (tau_theory - tau_data) * 1e9;
+        % 加权残差
+        residuals = (tau_theory - tau_data) / sigma;
+        
+        % 对数似然 (高斯噪声模型)
+        logL = -0.5 * sum(weights .* residuals.^2);
         
         % 检查 NaN
-        if any(isnan(F_vec))
-            F_vec = ones(size(f_data)) * 1e5;
+        if isnan(logL) || isinf(logL)
+            logL = -1e10;
         end
     catch
-        F_vec = ones(size(f_data)) * 1e5;
+        logL = -1e10;
     end
 end
 
