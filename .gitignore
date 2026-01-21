@@ -1,0 +1,20 @@
+# MATLAB
+*.asv
+*.m~
+*.mat
+!thesis-code/*.mat
+!research_output/**/*.mat
+
+# CST Studio Suite
+*.lok
+*.bak
+*.autosave
+*.active
+^Model.lok
+CSRR_WR28_Lorentz/
+Model/
+ModelCache/
+
+# OS
+Thumbs.db
+.DS_Store

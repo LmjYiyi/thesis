@@ -29,27 +29,29 @@ description: 博士论文专家评审工作流程 - 985博导同行评审标准
 ### 核心研究问题
 等离子体鞘套在强色散条件下，传统LFMCW诊断方法失效。本研究提出：
 - **滑动时频特征提取**：突破全频段FFT的栅栏效应
-- **加权非线性反演**：解决截止频率附近的信噪比衰减问题
+- **MCMC贝叶斯反演**：解决截止频率附近的参数反演与不确定性量化
 
 ### 核心理论共识（不可违背）
-1. **碰撞频率 $\nu_e$ 是二阶微扰**：$(\nu_e/\omega)^2 \ll 1$，对群时延影响微弱
-2. **电子密度 $n_e$ 主导非线性度**：$\eta(f) = \frac{B}{f} \cdot \frac{(f_p/f)^2}{[1-(f_p/f)^2]^{1.5}}$
-3. **反演策略**：固定 $\nu_e$，仅反演 $n_e$，避免病态问题
-4. **工程判据**：$B \cdot \eta \cdot \tau_0 \le 1$ 划分色散强弱区域
+1. **碰撞频率 $\nu_e$ 是二阶微扰**：$(\nu_e/\omega)^2 \ll 1$，对群时延影响微弱 ← `nue.m`
+2. **多解性问题**：不同参数组合的时延曲线可能相交，需曲线拟合确定唯一解 ← `test.m`
+3. **电子密度 $n_e$ 主导非线性度**：$\eta(f) = \frac{B}{f} \cdot \frac{(f_p/f)^2}{[1-(f_p/f)^2]^{1.5}}$
+4. **反演策略**：固定 $\nu_e$，仅反演 $n_e$，避免病态问题
+5. **工程判据**：$B \cdot \eta \cdot \tau_0 \le 1$ 划分色散强弱区域
 
 ### 技术路线
-滑动窗口 → MDL多径抑制 → ESPRIT超分辨 → 加权LM反演
+滑动窗口 → MDL多径抑制 → ESPRIT超分辨 → **MCMC贝叶斯反演** ← `LM_MCMC.m`
 
 ### 评审注意事项
 - ❌ 不得建议"同时反演 $n_e$ 和 $\nu_e$"（违背理论共识）
-- ❌ 不得质疑"固定 $\nu_e$ 的合理性"（已在3.2.3节证明）
-- ✅ 应理解加权矩阵的物理动机（补偿碰撞频率导致的幅度衰减）
+- ❌ 不得质疑"固定 $\nu_e$ 的合理性"（已在4.1.1节证明）
+- ✅ 应理解加权似然函数的物理动机（补偿碰撞频率导致的幅度衰减）
 - ✅ 应熟悉仿真参数的典型值（$f_p \approx 29$ GHz, $\nu_e \approx 1.5$ GHz, $d = 150$ mm）
 
-**强制要求**：评审前必须查阅 [核心研究档案](file:///Users/mac/Desktop/lunwx/.agent/workflows/resources/核心研究档案.txt) 的以下章节：
+**强制要求**：评审前必须查阅 [核心研究档案](resources/核心研究档案.txt) 的以下章节：
 - 3.2 节：碰撞频率影响的量级分析（二阶小量证明）
 - 3.4 节：反演问题的病态性分析
-- 第4节：加权反向拟合与LM优化
+- 第4节：MCMC贝叶斯反演与不确定性量化
+
 
 ---
 
@@ -57,15 +59,13 @@ description: 博士论文专家评审工作流程 - 985博导同行评审标准
 
 评审时**必须对照**以下资源，检查内容是否符合技术规范和数据一致性：
 
-### 技术标准文档
-- [核心研究档案](file:///Users/mac/Desktop/lunwx/.agent/workflows/resources/核心研究档案.txt) - 公式推导标准
-- [论文大纲](file:///Users/mac/Desktop/lunwx/.agent/workflows/resources/大纲.txt) - 章节结构规范
-- [写作风格参考](file:///Users/mac/Desktop/lunwx/.agent/workflows/resources/writing-style.txt) - 文本风格范例
-
-### 仿真数据验证
-- [MATLAB代码目录](file:///Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/) - 仿真代码
-- [代码参考文档](file:///Users/mac/Desktop/lunwx/.agent/workflows/resources/matlab-code-reference.md) - 代码与章节映射
-- [公式模板](file:///Users/mac/Desktop/lunwx/.agent/workflows/resources/formula-templates.md) - LaTeX公式标准
+### 核心资源
+- [核心研究档案](resources/核心研究档案.txt) - 公式推导标准
+- [科研成果目录](research_output/) - 原始实验数据与报告 🆕
+- [论文大纲](resources/大纲.txt) - 章节结构规范
+- [MATLAB代码](thesis-code/) - 仿真代码
+- [代码参考文档](resources/matlab-code-reference.md) - 代码与章节映射
+- [公式模板](resources/formula-templates.md) - LaTeX公式标准
 
 ---
 

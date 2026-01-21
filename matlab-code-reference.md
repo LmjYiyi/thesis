@@ -2,34 +2,21 @@
 description: MATLAB仿真代码与论文章节的映射参考
 ---
 
-# MATLAB 代码参考
+# MATLAB 仿真代码参考指南
 
-> **代码位置**：`/Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/`
->
-> 详细文档请查看：[完整代码参考指南](file:///Users/mac/Desktop/lunwx/.agent/workflows/resources/matlab-code-reference.md)
+> 代码位置：`thesis-code/`
 
----
+## 代码与论文章节映射
 
-## 快速映射
-
-| 代码 | 章节 | 运行命令 |
-|-----|-----|---------|
-| [`nue.m`](file:///Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/nue.m) | 3.2.3 参数敏感性 | `>> nue` |
-| [`lianghua.m`](file:///Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/lianghua.m) | 3.1.3 & 3.4.2 工程判据 | `>> lianghua` |
-| [`test.m`](file:///Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/test.m) | 3.3.3 二阶微扰 | `>> test` |
-| [`LM.m`](file:///Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/LM.m) | 第四章 反演算法 | `>> LM` |
-| [`initial.m`](file:///Users/mac/Desktop/lunwx/.agent/workflows/thesis-code/initial.m) | 传统方法对比 | `>> initial` |
-
----
-
-## 代码目录结构
-
-```
-.agent/workflows/thesis-code/
-├── LM.m         # 核心反演算法 (第四章)
-├── initial.m    # 传统诊断方法 (对比基线)
-├── nue.m        # 参数敏感性分析 (3.2.3节)
-├── lianghua.m   # 工程判据可视化 (3.1.3/3.4.2节)
-├── test.m       # 二阶小量验证 (3.3.3节)
-└── README.md    # 代码文档说明
-```
+| 代码文件 | 对应论文章节 | 核心功能 |
+|----------|-------------|----------|
+| `test.m` | **3.2.3** 多解性问题 | 曲线相交现象展示 |
+| `lianghua.m` | **3.4.2** 工程判据 | 工程判据 ξ = B·η·τ₀ |
+| `nue.m` | **4.1.1** 参数敏感性 | 验证电子密度主导性 |
+| `LM_MCMC.m` | **4.3 + 4.4** | Drude模型MCMC反演与验证 |
+| `LM.m` | **4.4** 对比基线 | Drude模型LM点估计 |
+| `CST_CSRR_Automation.m` | **5.1.1** | CSRR波导CST自动化建模 |
+| `extract_lorentz_params_from_s21.m` | **5.1.2** | S21参数拟合Lorentz模型 |
+| `LM_lorentz_CST_LFMCW.m` | **5.1.3** | CST数据LFMCW信号处理+MCMC |
+| `LFMCW_filter_MCMC.m` | **5.2** | 滤波器三参数MCMC反演 |
+| `initial.m` | **5.3.2** | 系统标定/传统方法对比 |

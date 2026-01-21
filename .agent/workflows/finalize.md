@@ -158,8 +158,9 @@ Step 2.2: 提取图表信息
   - 参数设置（如 f_p = 29 GHz）
   - 曲线特征（如 恒定直线、向下倾斜、弯曲）
   ↓
-Step 2.3: 参考 thesis-code
+Step 2.3: 参考 thesis-code / research_output
   - 查找相关的物理计算逻辑
+  - 从 research_output 获取实验数据
   - 确保参数一致性
   ↓
 Step 2.4: 编写绘图代码
@@ -183,7 +184,7 @@ Step 2.4: 编写绘图代码
 | 群时延曲线 | `nue.m` | 群时延计算、敏感性分析 |
 | 频谱图 | `initial.m` | FFT分析、频谱绘制 |
 | 工程判据图 | `lianghua.m` | η因子计算、边界曲线 |
-| 反演结果图 | `LM.m` | 加权LM算法、误差分析 |
+| 反演结果图 | `LM_MCMC.m` | MCMC贝叶斯反演、Corner Plot |
 
 ### 绘图代码模板
 
