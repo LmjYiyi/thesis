@@ -184,7 +184,17 @@ Step 2.4: 编写绘图代码
 | 群时延曲线 | `nue.m` | 群时延计算、敏感性分析 |
 | 频谱图 | `initial.m` | FFT分析、频谱绘制 |
 | 工程判据图 | `lianghua.m` | η因子计算、边界曲线 |
-| 反演结果图 | `LM_MCMC.m` | MCMC贝叶斯反演、Corner Plot |
+| 反演结果图（理想） | `LM_MCMC.m` | MCMC贝叶斯反演、Corner Plot |
+| 反演结果图（含噪） | `LM_MCMC_with_noise.m` | 含噪MCMC反演、95%置信带、鲁棒性测试 |
+
+#### `LM_MCMC_with_noise.m` 输出图表（4.4节专用）
+
+| Figure编号 | 内容描述 | 建议论文图号 |
+|-----------|---------|-------------|
+| Figure 10 | 纯净信号 vs 含噪信号对比 | 图4-X |
+| Figure 11 | MCMC采样轨迹 (Trace Plot) | 图4-X |
+| Figure 12 | 参数联合后验分布 (Corner Plot) | 图4-X |
+| Figure 13 | MCMC拟合验证（后验均值+95%置信带） | 图4-X |
 
 ### 绘图代码模板
 
