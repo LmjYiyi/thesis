@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% CST CSRR 自动化仿真脚本 - MATLAB 主控程序
-% 功能: 调用 CST Microwave Studio 创建 CSRR-loaded WR-28 波导模型
+% CST SRR 自动化仿真脚本 - MATLAB 主控程序
+% 功能: 调用 CST Microwave Studio 创建 SRR-loaded WR-28 波导模型
 %       运行仿真并提取 S 参数, 拟合 Lorentz 模型参数
 % 作者: Auto-generated for thesis project
 % 日期: 2026-01-18
@@ -22,11 +22,11 @@ fprintf('工作目录: %s\n', script_dir);
 % 1.1 CST 环境配置
 % ---------------------------
 CST_VERSION = '2023';  % 修改为你的 CST 版本
-PROJECT_NAME = 'CSRR_WR28_Lorentz';
+PROJECT_NAME = 'SRR_WR28_Lorentz';
 PROJECT_PATH = pwd;    % 当前目录, 可修改
 
 % ---------------------------
-% 1.2 物理结构参数 (WR-28 + CSRR)
+% 1.2 物理结构参数 (WR-28 + SRR)
 % ---------------------------
 params = struct();
 
@@ -35,12 +35,12 @@ params.waveguide.a = 7.112;        % 波导宽度 (mm)
 params.waveguide.b = 3.556;        % 波导高度 (mm)
 params.waveguide.length = 20;      % 波导总长度 (mm)
 
-% CSRR 几何参数
-params.csrr.L_out = 2.0;           % 外环边长 (mm)
-params.csrr.L_in = 1.4;            % 内环边长 (mm)
-params.csrr.w = 0.2;               % 环宽 (mm)
-params.csrr.g = 0.15;              % 开口宽度 (mm)
-params.csrr.position_z = 10;       % CSRR 在波导中的位置 (mm)
+% SRR 几何参数
+params.srr.L_out = 2.0;            % 外环边长 (mm)
+params.srr.L_in = 1.4;             % 内环边长 (mm)
+params.srr.w = 0.2;                % 环宽 (mm)
+params.srr.g = 0.15;               % 开口宽度 (mm)
+params.srr.position_z = 10;        % SRR 在波导中的位置 (mm)
 
 % 基板参数 (Rogers 5880)
 params.substrate.h = 0.254;        % 基板厚度 (mm)
@@ -64,10 +64,10 @@ params.sim.n_points = 5000;         % 频率采样点数
 params.d_eff = 3e-3;               % 有效厚度 (m) - 可调整
 
 fprintf('========================================\n');
-fprintf('CST CSRR 自动化仿真脚本\n');
+fprintf('CST SRR 自动化仿真脚本\n');
 fprintf('========================================\n');
 fprintf('波导: WR-28 (%.3f x %.3f mm)\n', params.waveguide.a, params.waveguide.b);
-fprintf('CSRR 外环: %.2f mm, 预期谐振: ~35 GHz\n', params.csrr.L_out);
+fprintf('SRR 外环: %.2f mm, 预期谐振: ~35 GHz\n', params.srr.L_out);
 fprintf('频率范围: %.1f - %.1f GHz\n', params.sim.f_min/1e9, params.sim.f_max/1e9);
 fprintf('========================================\n\n');
 
@@ -90,7 +90,7 @@ catch ME
     fprintf('\n--- 备选方案 ---\n');
     fprintf('请使用以下方式手动创建模型:\n');
     fprintf('1. 打开 CST Microwave Studio\n');
-    fprintf('2. 运行 VBA 宏: CST_CSRR_Template.bas\n');
+    fprintf('2. 运行 VBA 宏: CST_SRR_Template.bas\n');
     fprintf('3. 导出 S 参数为 .csv 或 .s2p 格式\n');
     fprintf('4. 使用本脚本的 "离线模式" 加载数据\n');
     fprintf('-----------------------------------\n\n');
@@ -100,7 +100,7 @@ end
 
 %% 3. 如果连接成功, 创建模型
 if CST_CONNECTED
-    fprintf('\n正在创建 CSRR-loaded WR-28 模型...\n');
+    fprintf('\n正在创建 SRR-loaded WR-28 模型...\n');
     
     try
         % CST COM 接口需要通过 VBA 命令字符串执行
@@ -151,50 +151,50 @@ if CST_CONNECTED
         invoke(mws, 'AddToHistory', 'define brick: Waveguide', vba_wg);
         fprintf('  ✓ 波导腔体创建完成\n');
         
-        % 3.5 创建 CSRR 外环
-        L_out = params.csrr.L_out;
+        % 3.5 创建 SRR 外环
+        L_out = params.srr.L_out;
         y_bottom = -params.waveguide.b/2;
-        z_pos = params.csrr.position_z;
+        z_pos = params.srr.position_z;
         
-        vba_csrr_outer = [...
+        vba_srr_outer = [...
             'With Brick' newline ...
             '  .Reset' newline ...
-            '  .Name "CSRR_Outer"' newline ...
-            '  .Component "CSRR"' newline ...
+            '  .Name "SRR_Outer"' newline ...
+            '  .Component "SRR"' newline ...
             '  .Material "PEC"' newline ...
             sprintf('  .Xrange "%.4f", "%.4f"', -L_out/2, L_out/2) newline ...
             sprintf('  .Yrange "%.4f", "%.4f"', y_bottom, y_bottom + params.metal.t) newline ...
             sprintf('  .Zrange "%.4f", "%.4f"', z_pos - L_out/2, z_pos + L_out/2) newline ...
             '  .Create' newline ...
             'End With'];
-        invoke(mws, 'AddToHistory', 'define brick: CSRR_Outer', vba_csrr_outer);
+        invoke(mws, 'AddToHistory', 'define brick: SRR_Outer', vba_srr_outer);
         
-        % 3.6 创建 CSRR 内部开口
-        L_in = params.csrr.L_in;
-        vba_csrr_inner = [...
+        % 3.6 创建 SRR 内部开口
+        L_in = params.srr.L_in;
+        vba_srr_inner = [...
             'With Brick' newline ...
             '  .Reset' newline ...
-            '  .Name "CSRR_Inner"' newline ...
-            '  .Component "CSRR"' newline ...
+            '  .Name "SRR_Inner"' newline ...
+            '  .Component "SRR"' newline ...
             '  .Material "Vacuum"' newline ...
             sprintf('  .Xrange "%.4f", "%.4f"', -L_in/2, L_in/2) newline ...
             sprintf('  .Yrange "%.4f", "%.4f"', y_bottom, y_bottom + params.metal.t) newline ...
             sprintf('  .Zrange "%.4f", "%.4f"', z_pos - L_in/2, z_pos + L_in/2) newline ...
             '  .Create' newline ...
             'End With'];
-        invoke(mws, 'AddToHistory', 'define brick: CSRR_Inner', vba_csrr_inner);
+        invoke(mws, 'AddToHistory', 'define brick: SRR_Inner', vba_srr_inner);
         
         % 布尔减法
-        vba_subtract = 'Solid.Subtract "CSRR:CSRR_Outer", "CSRR:CSRR_Inner"';
+        vba_subtract = 'Solid.Subtract "SRR:SRR_Outer", "SRR:SRR_Inner"';
         invoke(mws, 'AddToHistory', 'boolean subtract', vba_subtract);
-        fprintf('  ✓ CSRR 结构创建完成\n');
+        fprintf('  ✓ SRR 结构创建完成\n');
         
         % 3.7 创建基板
         vba_sub = [...
             'With Brick' newline ...
             '  .Reset' newline ...
             '  .Name "Substrate"' newline ...
-            '  .Component "CSRR"' newline ...
+            '  .Component "SRR"' newline ...
             '  .Material "Rogers5880"' newline ...
             sprintf('  .Xrange "%.4f", "%.4f"', -params.waveguide.a/2, params.waveguide.a/2) newline ...
             sprintf('  .Yrange "%.4f", "%.4f"', y_bottom - params.substrate.h, y_bottom) newline ...

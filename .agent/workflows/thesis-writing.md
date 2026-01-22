@@ -145,10 +145,10 @@ LFMCW、差频信号、群时延、栅栏效应、信噪比、MDL准则、ESPRIT
 - [ ] 4.4.3 降维反演的精度与鲁棒性测试 ← `LM_MCMC_with_noise.m` *(SNR参数扫描)*
 
 ### 第五章 拓展验证与实验
-- [ ] 5.1.1 CSRR波导设计与CST仿真 ← `CST_CSRR_Automation.m` 🆕
-- [ ] 5.1.2 S21参数拟合 ← `extract_lorentz_params_from_s21.m` 🆕
-- [ ] 5.1.3 Lorentz MCMC反演 ← `LM_lorentz_CST_LFMCW.m` 🆕
-- [ ] 5.1.4 Lorentz与Drude敏感性对比
+- [x] 5.1.1 SRR波导设计与CST仿真 ← `CST_SRR_Automation.m` ✅
+- [x] 5.1.2 S21参数拟合 ← `extract_lorentz_params_from_s21.m` ✅
+- [x] 5.1.3 Lorentz MCMC反演 ← `LM_lorentz_CST_LFMCW.m` ✅
+- [x] 5.1.4 Lorentz与Drude敏感性对比 ✅
 - [ ] 5.2.1 滤波器群时延模型
 - [ ] 5.2.2 滤波器三参数反演 ← `LFMCW_filter_MCMC.m`
 - [ ] 5.2.3 算法普适性结论

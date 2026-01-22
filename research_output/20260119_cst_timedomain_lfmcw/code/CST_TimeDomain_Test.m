@@ -101,7 +101,7 @@ sgtitle('LFMCW激励信号', 'FontName', 'SimHei', 'FontWeight', 'bold');
 fprintf('\n========================================\n');
 fprintf('【CST操作指南】请手动执行以下步骤:\n');
 fprintf('========================================\n');
-fprintf('1. 打开CST项目 (CSRR_WR28_Lorentz.cst)\n');
+fprintf('1. 打开CST项目 (SRR_WR28_Lorentz.cst)\n');
 fprintf('2. 切换到时域求解器:\n');
 fprintf('   → Simulation → Setup Solver → Time Domain\n');
 fprintf('3. 设置用户自定义激励:\n');

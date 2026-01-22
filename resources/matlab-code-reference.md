@@ -24,7 +24,7 @@ thesis-code/
 ├── test.m                      # 多解性问题/曲线相交 (3.2.3节)
 ├── lorentz_sensitivity_analysis.m  # Lorentz敏感性分析
 ├── cst_lorentz/                # CST仿真代码目录 (第五章)
-│   ├── CST_CSRR_Automation.m       # CST自动化建模 (5.1.1节)
+│   ├── CST_SRR_Automation.m        # CST自动化建模 (5.1.1节)
 │   ├── extract_lorentz_params_from_s21.m  # S21参数拟合 (5.1.2节)
 │   └── LM_lorentz_CST_LFMCW.m      # CST+LFMCW反演 (5.1.3节)
 └── README.md                   # 代码文档说明
@@ -41,7 +41,7 @@ thesis-code/
 | `nue.m` | **4.1.1** 参数敏感性 | 验证电子密度主导性 + 碰撞频率解耦 | 图 4-1a, 4-1b |
 | `LM_MCMC.m` | **4.3 + 4.4** | Drude模型MCMC反演与验证 | 图 4-X (Trace, Corner) |
 | `LM.m` | **4.4** 对比基线 | Drude模型LM点估计 | 图 4-X |
-| `CST_CSRR_Automation.m` | **5.1.1** | CSRR波导CST自动化建模 | - |
+| `CST_SRR_Automation.m` | **5.1.1** | SRR波导CST自动化建模 | - |
 | `extract_lorentz_params_from_s21.m` | **5.1.2** | S21参数拟合Lorentz模型 | 图 5-X |
 | `LM_lorentz_CST_LFMCW.m` | **5.1.3** | CST数据LFMCW信号处理+MCMC | 图 5-X |
 | `LFMCW_filter_MCMC.m` | **5.2** | 滤波器三参数MCMC反演 | 3×3 Corner Plot |
@@ -108,4 +108,4 @@ thesis-code/
 | Lorentz敏感性 | `research_output/20260115_lorentz_sensitivity/` | 5.1.4 |
 | 贝叶斯反演 | `research_output/20260118_bayesian_inversion/` | 4.3 |
 | CST时域仿真 | `research_output/20260119_cst_timedomain_lfmcw/` | 5.1 |
-| CSRR LFMCW反演 | `research_output/20260119_csrr_lfmcw_inversion/` | 5.1 |
+| SRR LFMCW反演 | `research_output/20260119_csrr_lfmcw_inversion/` | 5.1 |

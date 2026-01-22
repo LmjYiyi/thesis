@@ -6,7 +6,7 @@
 clc; clear; close all;
 
 %% 1. 读取S参数数据
-s2p_file = fullfile(fileparts(mfilename('fullpath')), 'cst_lorentz', 'data', 'data.s2p');
+s2p_file = fullfile(fileparts(mfilename('fullpath')),  'data', 'data.s2p');
 [f_cst, S11, S21, S12, S22] = read_s2p_touchstone(s2p_file);
 
 fprintf('========================================\n');
