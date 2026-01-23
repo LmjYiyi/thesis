@@ -1,118 +1,131 @@
-%% plot_fig_3_4.m
-% 论文图 3-4：带宽-散焦非线性耦合曲线
-% 生成日期：2026-01-22
-% 对应章节：3.3.3 频谱特征量化
-%
-% 文档描述（第175行）：
-% "图3-4展示了频谱展宽 ΔfD 随带宽 B (1-5 GHz) 的变化规律。
-% 在小带宽区域(B < 3 GHz)，曲线严格遵循 ΔfD ∝ B² 的抛物线趋势(虚线为二次项近似)；
-% 当带宽超过3 GHz后，三次项修正开始显现，实线偏离虚线，展宽增速放缓。
-% 最优带宽约为 Bopt ≈ 3.5 GHz"
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% LFMCW 等离子体色散效应可视化 (图3-4 复现)
+% 功能：生成不同截止频率(fp)下的差频信号频谱，展示频谱散焦/展宽效应
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear; clc; close all;
+clc; clear all; close all;
 
-%% 1. 参数设置（与 thesis-code 保持一致）
-c = 3e8;                    % 光速 (m/s)
-epsilon_0 = 8.854e-12;      % 真空介电常数 (F/m)
-m_e = 9.109e-31;            % 电子质量 (kg)
-q_e = 1.602e-19;            % 电子电量 (C)
-
-% 等离子体参数（强色散条件）
-f_p = 29e9;                 % 截止频率 (Hz)
-omega_p = 2*pi*f_p;
-n_e = omega_p^2 * epsilon_0 * m_e / q_e^2;
-nu_e = 1.5e9;               % 碰撞频率 (Hz)
-d = 0.15;                   % 等离子体厚度 (m)
-
+%% 1. 基础雷达与环境参数设置
 % LFMCW雷达参数
-f0 = 34e9;                  % 中心频率 (Hz)
-T_m = 1e-3;                 % 扫频周期 (s)
+f_start = 34.2e9;            
+f_end   = 37.4e9;              
+T_m     = 50e-6;                 
+B       = f_end - f_start;         
+K       = B/T_m;                   
+f_s     = 80e9;   % 采样率 80GHz               
 
-% 带宽扫描范围
-B_range = linspace(1e9, 5e9, 100);  % 1-5 GHz
+% 物理常数
+c = 3e8;                     
+epsilon_0 = 8.854e-12;
+m_e = 9.109e-31;
+e_charge = 1.602e-19;
 
-%% 2. 计算泰勒展开系数（固定值）
-omega0 = 2*pi*f0;
+% 传播介质参数 (固定部分)
+d = 150e-3;      % 等离子体厚度 150mm
+nu = 1.5e9;      % 碰撞频率 (保持适中，主要看色散)
 
-% tau0 (式3-21)
-tau0 = d / (c * sqrt(1 - (f_p/f0)^2));
+% 时间轴构建
+t_s = 1/f_s;                 
+N = round(T_m/t_s);          
+t = (0:N-1)*t_s;             
 
-% tau1 (式3-24，角频率维度)
-tau1 = (1/(2*pi)) * (-tau0/f0) * ((f_p/f0)^2 / (1-(f_p/f0)^2)^1.5);
+% 频率轴构建 (用于频域Drude计算)
+f_axis = (0:N-1)*(f_s/N);         
+idx_neg = f_axis >= f_s/2;
+f_axis(idx_neg) = f_axis(idx_neg) - f_s;
+omega = 2*pi*f_axis; 
 
-% tau2 (式3-25，角频率维度)
-tau2 = (1/(2*pi)^2) * (tau0/f0^2) * ...
-       (3*(f_p/f0)^4 / (1-(f_p/f0)^2)^2.5 + (f_p/f0)^2 / (1-(f_p/f0)^2)^1.5);
+% 防止除零
+omega_safe = omega; 
+omega_safe(omega_safe == 0) = 1e-10;
 
-%% 3. 计算频谱展宽 ΔfD 随带宽 B 的变化
+%% 2. 信号生成 (只生成一次发射信号)
+f_t = f_start + K*mod(t, T_m);  
+phi_t = 2*pi*cumsum(f_t)*t_s;   
+s_tx = cos(phi_t);              
+fprintf('发射信号生成完成...\n');
 
-% 系数定义(式3-51)
-C1 = omega0*tau2 + 2*tau1;
-C2 = tau1^2 + tau0*tau2;
+%% 3. 循环仿真核心：不同截止频率下的响应
+% 定义要对比的截止频率数组 (单位 Hz)
+fp_list = [15e9, 25e9, 29e9]; 
+plot_titles = {'(a) Weak Dispersion (fp=15GHz)', ...
+               '(b) Medium Dispersion (fp=25GHz)', ...
+               '(c) Strong Dispersion (fp=29GHz)'};
 
-% 完整公式(式3-49)
-Delta_fD_full = zeros(size(B_range));
-% 二次近似(式3-50)
-Delta_fD_approx = zeros(size(B_range));
+% 准备绘图画布
+figure('Name', '色散效应频谱对比', 'Color', 'w', 'Position', [100, 200, 1400, 400]);
 
-for i = 1:length(B_range)
-    B = B_range(i);
+for k = 1:length(fp_list)
+    f_c_curr = fp_list(k);
+    omega_p_curr = 2*pi*f_c_curr;
     
-    % 完整公式（含三次项修正）
-    Delta_fD_full(i) = abs(2*pi*(B^2/T_m)*(C1 - 2*pi*(B/T_m)*C2));
+    fprintf('正在处理: fp = %.1f GHz...\n', f_c_curr/1e9);
     
-    % 二次近似（仅保留B²项）
-    Delta_fD_approx(i) = 2*pi*(B^2/T_m)*abs(C1);
+    % --- A. Drude模型传播模拟 ---
+    
+    % 1. 计算复介电常数 (Drude Model)
+    % epsilon = 1 - wp^2 / (w^2 + i*w*nu)
+    epsilon_r_complex = 1 - (omega_p_curr^2) ./ (omega_safe.^2 + 1i * omega_safe * nu);
+    epsilon_r_complex(omega == 0) = 1; 
+    
+    % 2. 计算复波数 k
+    k_complex = (omega ./ c) .* sqrt(epsilon_r_complex);
+    k_real = real(k_complex);
+    k_imag = imag(k_complex);
+    
+    % 3. 传递函数 H (包含相位延迟和衰减)
+    % 确保衰减项为负指数
+    H_plasma = exp(-1i * k_real * d - abs(k_imag) * d);
+    
+    % 4. 频域施加影响并转回时域
+    S_TX_fft = fft(s_tx);
+    S_RX_plasma_fft = S_TX_fft .* H_plasma;
+    s_rx_plasma = real(ifft(S_RX_plasma_fft));
+    
+    % --- B. 混频与滤波 ---
+    
+    % 混频
+    s_mix = s_tx .* s_rx_plasma;
+    
+    % 低通滤波 (关键调整：由于色散会导致频谱展宽，这里必须放宽截止频率)
+    % 原代码 100MHz 可能截断强色散信号，此处设为 300MHz
+    fc_lp = 300e6;  
+    [b_lp, a_lp] = butter(4, fc_lp/(f_s/2));
+    s_if = filtfilt(b_lp, a_lp, s_mix);
+    
+    % --- C. 频谱分析 (FFT) ---
+    
+    % 加窗抑制旁瓣
+    win = hann(N)';
+    s_if_win = s_if .* win;
+    
+    S_IF = fft(s_if_win, N);
+    S_IF_mag = abs(S_IF); % 归一化幅度以便观察形状
+    S_IF_mag = S_IF_mag / max(S_IF_mag); % 归一化到 0-1
+    
+    % 转换频率轴用于绘图 (只看正半轴)
+    f_plot_axis = (0:N/2-1)*(f_s/N);
+    S_IF_plot = S_IF_mag(1:N/2);
+    
+    % --- D. 绘图 (Subplot) ---
+    subplot(1, 3, k);
+    
+    % 绘制频谱 (限制显示范围 0 - 200 MHz 以凸显展宽)
+    % 注意：差频本身很低，但由于色散，能量会散开
+    plot(f_plot_axis/1e6, 20*log10(S_IF_plot), 'b', 'LineWidth', 1.5);
+    
+    % 图表美化
+    grid on;
+    title(plot_titles{k}, 'FontSize', 12, 'FontWeight', 'bold');
+    xlabel('Frequency (MHz)');
+    ylabel('Normalized Amplitude (dB)');
+    xlim([0, 200]); % 聚焦观察 0-200MHz 区域
+    ylim([-60, 0]); % 动态范围
+    
+    % 在图上标注电子密度
+    n_e_calc = (omega_p_curr^2 * epsilon_0 * m_e) / e_charge^2;
+    text(100, -10, sprintf('Ne \\approx %.2e m^{-3}', n_e_calc), ...
+         'FontSize', 10, 'BackgroundColor', 'w', 'EdgeColor', 'k');
 end
 
-%% 4. 绘图
-figure('Position', [100, 100, 800, 600]);
-
-% 绘制完整公式（实线）
-plot(B_range/1e9, Delta_fD_full/1e6, 'b-', 'LineWidth', 2.5, 'DisplayName', '完整公式 (式3-49)');
-hold on; grid on; box on;
-
-% 绘制二次近似（虚线）
-plot(B_range/1e9, Delta_fD_approx/1e6, 'r--', 'LineWidth', 2, 'DisplayName', '二次近似 (式3-50)');
-
-% 标注B = 3 GHz分界线
-plot([3 3], [0 max(Delta_fD_full/1e6)*1.1], 'k:', 'LineWidth', 1.5, 'DisplayName', 'B = 3 GHz');
-
-% 标注最优带宽 Bopt ≈ 3.5 GHz
-B_opt = 3.5;  % GHz
-[~, idx_opt] = min(abs(B_range/1e9 - B_opt));
-Delta_fD_opt = Delta_fD_full(idx_opt)/1e6;
-plot(B_opt, Delta_fD_opt, 'mo', 'MarkerSize', 10, 'MarkerFaceColor', 'm', ...
-     'DisplayName', sprintf('B_{opt} ≈ %.1f GHz', B_opt));
-
-% 论文标准绘图设置
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
-set(gca, 'LineWidth', 1.2);
-
-xlabel('带宽 B (GHz)', 'FontSize', 14);
-ylabel('频谱展宽 Δf_D (MHz)', 'FontSize', 14);
-title('图 3-4  带宽-散焦非线性耦合曲线', 'FontSize', 14, 'FontWeight', 'bold');
-
-% 图例
-legend('Location', 'northwest', 'FontSize', 11);
-
-% 标注关键区域
-text(1.5, max(Delta_fD_full/1e6)*0.8, '抛物线区域 (∝B²)', ...
-     'FontSize', 11, 'Color', 'k', 'BackgroundColor', 'w');
-text(4.2, max(Delta_fD_full/1e6)*0.5, '三次修正区域', ...
-     'FontSize', 11, 'Color', 'k', 'BackgroundColor', 'w');
-
-xlim([1 5]);
-ylim([0 max(Delta_fD_full/1e6)*1.1]);
-
-%% 5. 保存图表
-% 保存为 PNG（高分辨率）
-print('-dpng', '-r300', '../../final_output/figures/图3-4_带宽散焦耦合.png');
-
-% 保存为 SVG（矢量图）
-print('-dsvg', '../../final_output/figures/图3-4_带宽散焦耦合.svg');
-
-fprintf('图 3-4 已保存至 final_output/figures/\n');
-fprintf('B < 3 GHz: 遵循 ΔfD ∝ B² 抛物线趋势\n');
-fprintf('B > 3 GHz: 三次项修正显现，实线偏离虚线\n');
-fprintf('最优带宽 Bopt ≈ %.1f GHz, ΔfD ≈ %.0f MHz\n', B_opt, Delta_fD_opt);
+fprintf('仿真完成。请查看 Figure 1。\n');
