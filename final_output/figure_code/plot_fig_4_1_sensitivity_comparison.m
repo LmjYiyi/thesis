@@ -92,6 +92,12 @@ for i = 1:length(nu_list)
     mag_data_nu = [mag_data_nu; mag_dB]; % 行向量存储
     
     ln = plot(f/1e9, tau_g_total*1e9, 'Color', colors_nu{i}, 'LineWidth', 1.5, 'LineStyle', '-');
+    
+    % 添加稀疏标记以区分曲线并避免数据点过密导致的线条过粗
+    markers = {'o', 's', '^', 'd', 'p'};
+    set(ln, 'Marker', markers{i}, 'MarkerSize', 5, 'MarkerFaceColor', 'w', ...
+           'MarkerIndices', 1:100:length(f));
+           
     h_lines = [h_lines, ln]; 
     
     legend_str_nu{end+1} = sprintf('\\nu_e = %.1f GHz', nu_current/1e9);
@@ -100,7 +106,10 @@ end
 % 2. 再画右轴：所有幅度曲线
 yyaxis right; hold on;
 for i = 1:length(nu_list)
-    plot(f/1e9, mag_data_nu(i, :), 'Color', colors_nu{i}, 'LineWidth', 1.2, 'LineStyle', '--');
+    ln_mag = plot(f/1e9, mag_data_nu(i, :), 'Color', colors_nu{i}, 'LineWidth', 1.2, 'LineStyle', '--');
+    % 为幅度曲线也添加稀疏标记，起始位置错开 50 个点以避免与时延标记重叠
+    set(ln_mag, 'Marker', markers{i}, 'MarkerSize', 4, 'MarkerFaceColor', 'w', ...
+               'MarkerIndices', 50:100:length(f));
 end
 
 % 左轴设置
@@ -123,66 +132,101 @@ legend(h_lines, legend_str_nu, 'Location', 'SouthWest', 'FontSize', 9);
 set(gca, 'FontSize', 10, 'LineWidth', 1.1);
 
 % 总标题
-sgtitle('图 4-1 电子密度与碰撞频率对群时延的差异化影响', 'FontSize', 14, 'FontWeight', 'bold');
+sgtitle('电子密度与碰撞频率对群时延的差异化影响', 'FontSize', 14, 'FontWeight', 'bold');
 
 % 保存图像
 print('-dpng', '-r300', '../../final_output/figures/图4-1_电子密度与碰撞频率敏感性对比.png');
 print('-dsvg', '../../final_output/figures/图4-1_电子密度与碰撞频率敏感性对比.svg');
 
 %% =============================================================
-%% 计算并打印最大偏移量 (仅计算最大截止频率之后的区域)
+%% 计算并打印最大偏移量 (基于统一的相对避让带宽)
 %% =============================================================
 fprintf('--------------------------------------------------------\n');
 fprintf('敏感性分析统计结果 (Passband Analysis):\n');
 
-% 确定全局最大截止频率 (以最坏情况为准，保证都在传播区)
-% 对于(a)图，最大截止频率是 max(fp_list)
-% 对于(b)图，截止频率固定为 fp_base
-% 为了公平对比，我们对两组数据分别使用其物理上的"全通频段"进行统计
-% (a) 的全通频段起始点: max(fp_list)
-% (b) 的全通频段起始点: fp_base (或者为了严格对比，也可以用 max(fp_list)，但此处按各自物理有效区计算更合理)
+% 1. 设定基准比例 (统一设定为 5% 的频率避让裕量)
+ratio_offset = 0.05; 
+fprintf('统计基准设定: 统一采用截止频率之上 %.2f%% 的频率点作为统计起点\n', ratio_offset * 100);
 
-% 逻辑：用户要求"计算最大截止频率之后的频率"。
-% 这里理解为：每张图各自的有效传播区。
-
-% 1. 电子密度图统计
+% 2. 电子密度图统计 (左图)
+% 左图每一条线的截止频率不同，最坏情况是 max(fp_list)
+% 应用相同的相对避让比例
 max_fp_ne = max(fp_list);
-valid_idx_ne = f > (max_fp_ne + 0.1e9); % 留一点裕量避开极点震荡
+f_limit_ne = max_fp_ne * (1 + ratio_offset);
+valid_idx_ne = f > f_limit_ne;
+
 if any(valid_idx_ne)
     tau_subset_ne = tau_data_ne(:, valid_idx_ne);
-    diff_ne = max(tau_subset_ne) - min(tau_subset_ne);
-    max_offset_ne = max(diff_ne) * 1e9; 
-    fprintf('1. 电子密度 (±40%%, f > %.2f GHz):\n   最大群时延偏移量 = %.4f ns\n', max_fp_ne/1e9, max_offset_ne);
-elseif ~isempty(fp_list) && max_fp_ne > max(f)
-    fprintf('1. 电子密度: 最大截止频率 (%.2f GHz) 超出绘图频率范围 (%.2f GHz)\n', max_fp_ne/1e9, max(f)/1e9);
+    diff_ne = max(tau_subset_ne) - min(tau_subset_ne); % 列向量：每个频率点上不同曲线的最大差值
+    [max_offset_ne, idx_max_ne] = max(diff_ne);
+    max_offset_ne_ns = max_offset_ne * 1e9; 
+    
+    % 对应的频率点
+    f_idx_sub = find(valid_idx_ne);
+    f_at_max_ne = f(f_idx_sub(idx_max_ne));
+    
+    % 计算相对变化率
+    avg_tau_at_max_ne = mean(tau_subset_ne(:, idx_max_ne));
+    percentage_variation_ne = (max_offset_ne / avg_tau_at_max_ne) * 100;
+    
+    fprintf('1. 电子密度 (n_e 变化 ±40%%):\n');
+    fprintf('   统计起始频率 = %.2f GHz (f_p_max + %.2f%%)\n', f_limit_ne/1e9, ratio_offset*100);
+    fprintf('   最大群时延偏移量 = %.4f ns (at %.2f GHz)\n', max_offset_ne_ns, f_at_max_ne/1e9);
+    fprintf('   相对变化率 = %.2f%%\n', percentage_variation_ne);
 else
-    fprintf('1. 电子密度: 有效频段外 (f_max < 40GHz)\n');
+    fprintf('1. 电子密度: 有效频段外 (f_limit > 40GHz)\n');
 end
 
-% 2. 碰撞频率图统计
-% 碰撞频率不改变截止频率，所以截止频率一直是 fp_base
-max_fp_nu = fp_base;
-% 用户指定：碰撞频率的统计区间在31Ghz以上
-f_limit_low = 31e9; 
-valid_idx_nu = f > f_limit_low;
+% 3. 碰撞频率图统计 (右图)
+% 截止频率固定为 fp_base
+f_limit_nu = fp_base * (1 + ratio_offset); 
+valid_idx_nu = f > f_limit_nu;
 
 if any(valid_idx_nu)
     tau_subset_nu = tau_data_nu(:, valid_idx_nu);
     
     % 计算该频段内，由于 nu 变化导致的最大时延差
-    % 对每一列（每个频率点），求 max - min (即不同 nu 曲线在该频率点的发散程度)
     tau_spread_per_freq = max(tau_subset_nu) - min(tau_subset_nu);
-    [max_offset_nu, idx_max] = max(tau_spread_per_freq);
+    [max_offset_nu, idx_max_nu] = max(tau_spread_per_freq);
     
-    % 对应的基准时延（用作分母计算百分比，取平均值更稳健）
-    avg_tau_at_max = mean(tau_subset_nu(:, idx_max));
-    
+    % 对应的基准时延
+    avg_tau_at_max = mean(tau_subset_nu(:, idx_max_nu));
     percentage_variation = (max_offset_nu / avg_tau_at_max) * 100;
-    max_offset_ns = max_offset_nu * 1e9;
+    max_offset_nu_ns = max_offset_nu * 1e9;
     
-    fprintf('2. 碰撞频率 (1.5-12 GHz, 统计区间 > %.2f GHz):\n', f_limit_low/1e9);
-    fprintf('   最大群时延偏移量 = %.4f ns\n', max_offset_ns);
-    fprintf('   相对变化率 = %.2f%%\n', percentage_variation);
+    % 计算 nu 参数本身的变化幅度
+    nu_min = min(nu_list);
+    nu_max = max(nu_list);
+    nu_param_change = (nu_max - nu_min) / nu_min * 100;
+    
+    % 对应的频率点
+    f_idx_sub_nu = find(valid_idx_nu);
+    f_at_max_nu = f(f_idx_sub_nu(idx_max_nu));
+    
+    fprintf('2. 碰撞频率 (总体: %.1f-%.1f GHz, 参数变化 +%.0f%%):\n', nu_min/1e9, nu_max/1e9, nu_param_change);
+    fprintf('   统计起始频率 = %.2f GHz (f_p + %.2f%%)\n', f_limit_nu/1e9, ratio_offset*100);
+    fprintf('   最大群时延偏移量 = %.4f ns (at %.2f GHz)\n', max_offset_nu_ns, f_at_max_nu/1e9);
+    fprintf('   时延相对变化率 = %.2f%%\n', percentage_variation);
+    
+    % --- [新增] 特别统计 nu = 3.0 GHz 的情况 ---
+    idx_base = find(nu_list == 1.5e9, 1);
+    idx_target = find(nu_list == 3.0e9, 1);
+    
+    if ~isempty(idx_base) && ~isempty(idx_target)
+        tau_base_row = tau_data_nu(idx_base, valid_idx_nu);
+        tau_target_row = tau_data_nu(idx_target, valid_idx_nu);
+        
+        diff_3g = abs(tau_target_row - tau_base_row);
+        [max_diff_3g, idx_max_3g] = max(diff_3g);
+        
+        avg_tau_3g = tau_base_row(idx_max_3g); 
+        per_var_3g = (max_diff_3g / avg_tau_3g) * 100;
+        
+        fprintf('   [特别关注] 当 nu_e 仅从 1.5 增至 3.0 GHz (参数变化 +100%%) 时:\n');
+        fprintf('   最大群时延偏移量 = %.4f ns\n', max_diff_3g * 1e9);
+        fprintf('   时延相对变化率 = %.4f%%\n', per_var_3g);
+    end
+
 else
     fprintf('2. 碰撞频率: 有效频段外\n');
 end

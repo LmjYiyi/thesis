@@ -62,20 +62,20 @@ hold on;
 [tau_max, idx_max] = max(tau_theory);
 plot(f_theory(idx_max)/1e9, tau_max*1e9, 'ro', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', 'r');
 text(f_theory(idx_max)/1e9 + 0.3, tau_max*1e9, sprintf('峰值: %.2f ns\n@ F_0=%.0f GHz', tau_max*1e9, F0_true/1e9), ...
-    'FontSize', 11, 'FontName', 'SimHei');
+    'FontSize', 11, 'FontName', 'SimHei', 'Interpreter', 'none');
 
 % 标注参数
 text_str = sprintf('F_0 = %.0f GHz\nBW = %.0f GHz\nN = %d', F0_true/1e9, BW_true/1e9, N_true);
-text(11, 1.5, text_str, 'FontSize', 11, 'FontName', 'SimHei', 'BackgroundColor', 'w', 'EdgeColor', 'k');
-
-xlabel('频率 f (GHz)', 'FontSize', 13, 'FontName', 'SimHei');
-ylabel('群时延 \tau_g (ns)', 'FontSize', 13, 'FontName', 'SimHei');
-title('图5-7 Butterworth滤波器理论群时延曲线', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei');
+text(11, 1.5, text_str, 'FontSize', 11, 'FontName', 'SimHei', 'BackgroundColor', 'w', 'EdgeColor', 'k', 'Interpreter', 'none');
 
 set(gca, 'FontName', 'Times New Roman', 'FontSize', 12, 'LineWidth', 1.2);
 xlim([f_start/1e9, f_end/1e9]);
 ylim([0, 2.2]);
 grid on; box on;
+
+xlabel('频率 f (GHz)', 'FontSize', 13, 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('群时延 τ_g (ns)', 'FontSize', 13, 'FontName', 'SimHei', 'Interpreter', 'none');
+title('图5-7 Butterworth滤波器理论群时延曲线', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
 
 % 保存
 print('-dpng', '-r300', [output_dir, '图5-7_滤波器理论群时延.png']);
@@ -147,15 +147,16 @@ subplot(1,2,1);
 t_disp = 50e-6;
 idx_disp = round(t_disp/t_s);
 plot(t(1:idx_disp)*1e6, s_if_filter(1:idx_disp), 'Color', colors.blue, 'LineWidth', 1);
-xlabel('时间 t (μs)', 'FontSize', 12, 'FontName', 'SimHei');
-ylabel('幅值', 'FontSize', 12, 'FontName', 'SimHei');
-title('(a) 差频信号时域波形', 'FontSize', 13, 'FontWeight', 'bold', 'FontName', 'SimHei');
 set(gca, 'FontName', 'Times New Roman', 'FontSize', 11, 'LineWidth', 1);
 xlim([0, t_disp*1e6]);
 grid on; box on;
 
+xlabel('时间 t (μs)', 'FontSize', 12, 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('幅值', 'FontSize', 12, 'FontName', 'SimHei', 'Interpreter', 'none');
+title('(a) 差频信号时域波形', 'FontSize', 13, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
+
 % 标注"馒头状"包络
-text(25, max(s_if_filter(1:idx_disp))*0.85, '平缓"馒头状"包络', 'FontSize', 10, 'FontName', 'SimHei', 'Color', colors.red);
+text(25, max(s_if_filter(1:idx_disp))*0.85, '平缓"馒头状"包络', 'FontSize', 10, 'FontName', 'SimHei', 'Color', colors.red, 'Interpreter', 'none');
 
 % 子图(b): 频域 - 双峰结构
 subplot(1,2,2);
@@ -165,21 +166,22 @@ f_lim = 400e3;
 idx_f = round(f_lim/(f_s/N_samples));
 
 stem(f_if_axis(1:idx_f)/1e3, S_IF(1:idx_f)/max(S_IF(1:idx_f)), 'Color', colors.blue, 'MarkerSize', 3, 'LineWidth', 0.8);
-xlabel('差频频率 f_{IF} (kHz)', 'FontSize', 12, 'FontName', 'SimHei');
-ylabel('归一化幅值', 'FontSize', 12, 'FontName', 'SimHei');
-title('(b) 差频信号FFT频谱（双峰结构）', 'FontSize', 13, 'FontWeight', 'bold', 'FontName', 'SimHei');
 set(gca, 'FontName', 'Times New Roman', 'FontSize', 11, 'LineWidth', 1);
 xlim([0, 400]);
 grid on; box on;
 
+xlabel('差频频率 f_{IF} (kHz)', 'FontSize', 12, 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('归一化幅值', 'FontSize', 12, 'FontName', 'SimHei', 'Interpreter', 'none');
+title('(b) 差频信号FFT频谱（双峰结构）', 'FontSize', 13, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
+
 % 标注双峰
 [pks, locs] = findpeaks(S_IF(1:idx_f), 'MinPeakHeight', max(S_IF(1:idx_f))*0.3, 'MinPeakDistance', 20);
 if length(locs) >= 2
-    text(f_if_axis(locs(1))/1e3, pks(1)/max(S_IF(1:idx_f))+0.08, '峰1', 'FontSize', 10, 'FontName', 'SimHei', 'Color', colors.red);
-    text(f_if_axis(locs(2))/1e3, pks(2)/max(S_IF(1:idx_f))+0.08, '峰2', 'FontSize', 10, 'FontName', 'SimHei', 'Color', colors.red);
+    text(f_if_axis(locs(1))/1e3, pks(1)/max(S_IF(1:idx_f))+0.08, '峰1', 'FontSize', 10, 'FontName', 'SimHei', 'Color', colors.red, 'Interpreter', 'none');
+    text(f_if_axis(locs(2))/1e3, pks(2)/max(S_IF(1:idx_f))+0.08, '峰2', 'FontSize', 10, 'FontName', 'SimHei', 'Color', colors.red, 'Interpreter', 'none');
 end
 
-sgtitle('图5-8 Butterworth滤波器差频信号特征', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei');
+sgtitle('图5-8 Butterworth滤波器差频信号特征', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
 
 print('-dpng', '-r300', [output_dir, '图5-8_滤波器差频信号.png']);
 fprintf('  已保存: 图5-8_滤波器差频信号.png\n');
@@ -209,22 +211,24 @@ plot(f_theory/1e9, tau_theory*1e9, 'r-', 'LineWidth', 2.5, 'DisplayName', '理�
 
 colormap(flipud(gray(256)));
 cb = colorbar;
-ylabel(cb, '信号幅度权重', 'FontSize', 11, 'FontName', 'SimHei');
+ylabel(cb, '信号幅度权重', 'FontSize', 11, 'FontName', 'SimHei', 'Interpreter', 'none');
 
-xlabel('探测频率 f (GHz)', 'FontSize', 13, 'FontName', 'SimHei');
-ylabel('群时延 \tau_g (ns)', 'FontSize', 13, 'FontName', 'SimHei');
-title('图5-9 滤波器ESPRIT特征提取结果', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei');
-
-legend({'ESPRIT提取点', '理论曲线'}, 'Location', 'northeast', 'FontSize', 11);
 set(gca, 'FontName', 'Times New Roman', 'FontSize', 12, 'LineWidth', 1.2);
 xlim([f_start/1e9, f_end/1e9]);
 ylim([0, 2.2]);
 grid on; box on;
 
+xlabel('探测频率 f (GHz)', 'FontSize', 13, 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('群时延 τ_g (ns)', 'FontSize', 13, 'FontName', 'SimHei', 'Interpreter', 'none');
+title('图5-9 滤波器ESPRIT特征提取结果', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
+
+lgd = legend({'ESPRIT提取点', '理论曲线'}, 'Location', 'northeast');
+set(lgd, 'FontName', 'SimHei', 'FontSize', 11, 'Interpreter', 'none');
+
 % 标注RMSE
 rmse = sqrt(mean((tau_esprit - tau_esprit_theory).^2));
 text(11, 0.3, sprintf('RMSE ≈ %.2f ns', rmse*1e9), 'FontSize', 11, 'FontName', 'SimHei', ...
-    'BackgroundColor', 'w', 'EdgeColor', 'k');
+    'BackgroundColor', 'w', 'EdgeColor', 'k', 'Interpreter', 'none');
 
 print('-dpng', '-r300', [output_dir, '图5-9_滤波器ESPRIT特征.png']);
 fprintf('  已保存: 图5-9_滤波器ESPRIT特征.png\n');
@@ -283,31 +287,31 @@ plot(samples_F0/1e9, 'Color', colors.blue, 'LineWidth', 0.5);
 hold on;
 yline(F0_true/1e9, 'r--', 'LineWidth', 2);
 xline(burn_in, 'k--', 'LineWidth', 1.5);
-xlabel('迭代次数', 'FontName', 'SimHei');
-ylabel('F_0 (GHz)', 'FontName', 'SimHei');
-title('(a) F_0 迹线图', 'FontName', 'SimHei', 'FontWeight', 'bold');
 set(gca, 'FontSize', 10); grid on;
-text(burn_in+200, 13.6, '预烧期', 'FontSize', 9, 'FontName', 'SimHei');
+xlabel('迭代次数', 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('F_0 (GHz)', 'FontName', 'SimHei', 'Interpreter', 'none');
+title('(a) F_0 迹线图', 'FontName', 'SimHei', 'FontWeight', 'bold', 'Interpreter', 'none');
+text(burn_in+200, 13.6, '预烧期', 'FontSize', 9, 'FontName', 'SimHei', 'Interpreter', 'none');
 
 subplot(2,3,2);
 plot(samples_BW/1e9, 'Color', colors.blue, 'LineWidth', 0.5);
 hold on;
 yline(BW_true/1e9, 'r--', 'LineWidth', 2);
 xline(burn_in, 'k--', 'LineWidth', 1.5);
-xlabel('迭代次数', 'FontName', 'SimHei');
-ylabel('BW (GHz)', 'FontName', 'SimHei');
-title('(b) BW 迹线图', 'FontName', 'SimHei', 'FontWeight', 'bold');
 set(gca, 'FontSize', 10); grid on;
+xlabel('迭代次数', 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('BW (GHz)', 'FontName', 'SimHei', 'Interpreter', 'none');
+title('(b) BW 迹线图', 'FontName', 'SimHei', 'FontWeight', 'bold', 'Interpreter', 'none');
 
 subplot(2,3,3);
 plot(samples_N, 'Color', colors.blue, 'LineWidth', 0.5);
 hold on;
 yline(N_true, 'r--', 'LineWidth', 2);
 xline(burn_in, 'k--', 'LineWidth', 1.5);
-xlabel('迭代次数', 'FontName', 'SimHei');
-ylabel('N', 'FontName', 'SimHei');
-title('(c) N 迹线图', 'FontName', 'SimHei', 'FontWeight', 'bold');
 set(gca, 'FontSize', 10); grid on;
+xlabel('迭代次数', 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('N', 'FontName', 'SimHei', 'Interpreter', 'none');
+title('(c) N 迹线图', 'FontName', 'SimHei', 'FontWeight', 'bold', 'Interpreter', 'none');
 
 % 后验直方图
 subplot(2,3,4);
@@ -317,10 +321,10 @@ xline(F0_true/1e9, 'r--', 'LineWidth', 2.5);
 F0_ci = prctile(samples_F0_valid, [2.5, 97.5]);
 xline(F0_ci(1)/1e9, 'k--', 'LineWidth', 1);
 xline(F0_ci(2)/1e9, 'k--', 'LineWidth', 1);
-xlabel('F_0 (GHz)', 'FontName', 'SimHei');
-ylabel('概率密度', 'FontName', 'SimHei');
-title('(d) F_0 后验分布', 'FontName', 'SimHei', 'FontWeight', 'bold');
 set(gca, 'FontSize', 10); grid on;
+xlabel('F_0 (GHz)', 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('概率密度', 'FontName', 'SimHei', 'Interpreter', 'none');
+title('(d) F_0 后验分布', 'FontName', 'SimHei', 'FontWeight', 'bold', 'Interpreter', 'none');
 
 subplot(2,3,5);
 histogram(samples_BW_valid/1e9, 50, 'Normalization', 'pdf', 'FaceColor', [0.4 0.8 0.4], 'EdgeColor', 'none');
@@ -329,10 +333,10 @@ xline(BW_true/1e9, 'r--', 'LineWidth', 2.5);
 BW_ci = prctile(samples_BW_valid, [2.5, 97.5]);
 xline(BW_ci(1)/1e9, 'k--', 'LineWidth', 1);
 xline(BW_ci(2)/1e9, 'k--', 'LineWidth', 1);
-xlabel('BW (GHz)', 'FontName', 'SimHei');
-ylabel('概率密度', 'FontName', 'SimHei');
-title('(e) BW 后验分布', 'FontName', 'SimHei', 'FontWeight', 'bold');
 set(gca, 'FontSize', 10); grid on;
+xlabel('BW (GHz)', 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('概率密度', 'FontName', 'SimHei', 'Interpreter', 'none');
+title('(e) BW 后验分布', 'FontName', 'SimHei', 'FontWeight', 'bold', 'Interpreter', 'none');
 
 subplot(2,3,6);
 histogram(samples_N_valid, 50, 'Normalization', 'pdf', 'FaceColor', [0.8 0.4 0.2], 'EdgeColor', 'none');
@@ -341,12 +345,12 @@ xline(N_true, 'r--', 'LineWidth', 2.5);
 N_ci = prctile(samples_N_valid, [2.5, 97.5]);
 xline(N_ci(1), 'k--', 'LineWidth', 1);
 xline(N_ci(2), 'k--', 'LineWidth', 1);
-xlabel('N (阶数)', 'FontName', 'SimHei');
-ylabel('概率密度', 'FontName', 'SimHei');
-title('(f) N 后验分布', 'FontName', 'SimHei', 'FontWeight', 'bold');
 set(gca, 'FontSize', 10); grid on;
+xlabel('N (阶数)', 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('概率密度', 'FontName', 'SimHei', 'Interpreter', 'none');
+title('(f) N 后验分布', 'FontName', 'SimHei', 'FontWeight', 'bold', 'Interpreter', 'none');
 
-sgtitle('图5-10 Butterworth滤波器MCMC反演结果', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei');
+sgtitle('图5-10 Butterworth滤波器MCMC反演结果', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
 
 print('-dpng', '-r300', [output_dir, '图5-10_滤波器MCMC结果.png']);
 fprintf('  已保存: 图5-10_滤波器MCMC结果.png\n');
@@ -361,69 +365,72 @@ figure('Position', [100, 100, 900, 900], 'Color', 'w');
 subplot(3,3,1);
 histogram(samples_F0_valid/1e9, 40, 'Normalization', 'pdf', 'FaceColor', [0.2 0.6 0.8], 'EdgeColor', 'none');
 hold on; xline(F0_true/1e9, 'r--', 'LineWidth', 2);
-ylabel('PDF', 'FontName', 'SimHei');
-title('F_0 (GHz)', 'FontName', 'SimHei', 'FontWeight', 'bold');
 set(gca, 'FontSize', 10);
+ylabel('PDF', 'FontName', 'SimHei', 'Interpreter', 'none');
+title('F_0 (GHz)', 'FontName', 'SimHei', 'FontWeight', 'bold', 'Interpreter', 'none');
 
 subplot(3,3,5);
 histogram(samples_BW_valid/1e9, 40, 'Normalization', 'pdf', 'FaceColor', [0.4 0.8 0.4], 'EdgeColor', 'none');
 hold on; xline(BW_true/1e9, 'r--', 'LineWidth', 2);
-ylabel('PDF', 'FontName', 'SimHei');
-title('BW (GHz)', 'FontName', 'SimHei', 'FontWeight', 'bold');
 set(gca, 'FontSize', 10);
+ylabel('PDF', 'FontName', 'SimHei', 'Interpreter', 'none');
+title('BW (GHz)', 'FontName', 'SimHei', 'FontWeight', 'bold', 'Interpreter', 'none');
 
 subplot(3,3,9);
 histogram(samples_N_valid, 40, 'Normalization', 'pdf', 'FaceColor', [0.8 0.4 0.2], 'EdgeColor', 'none');
 hold on; xline(N_true, 'r--', 'LineWidth', 2);
-xlabel('N', 'FontName', 'SimHei');
-ylabel('PDF', 'FontName', 'SimHei');
-title('N (阶数)', 'FontName', 'SimHei', 'FontWeight', 'bold');
 set(gca, 'FontSize', 10);
+xlabel('N', 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('PDF', 'FontName', 'SimHei', 'Interpreter', 'none');
+title('N (阶数)', 'FontName', 'SimHei', 'FontWeight', 'bold', 'Interpreter', 'none');
 
 % 下三角: 联合散点分布
 subplot(3,3,4);
 scatter(samples_F0_valid(1:20:end)/1e9, samples_BW_valid(1:20:end)/1e9, 8, colors.blue, 'filled', 'MarkerFaceAlpha', 0.3);
 hold on;
 plot(F0_true/1e9, BW_true/1e9, 'r+', 'MarkerSize', 15, 'LineWidth', 3);
-xlabel('F_0 (GHz)', 'FontName', 'SimHei');
-ylabel('BW (GHz)', 'FontName', 'SimHei');
 set(gca, 'FontSize', 10); grid on;
+xlabel('F_0 (GHz)', 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('BW (GHz)', 'FontName', 'SimHei', 'Interpreter', 'none');
 
 subplot(3,3,7);
 scatter(samples_F0_valid(1:20:end)/1e9, samples_N_valid(1:20:end), 8, colors.blue, 'filled', 'MarkerFaceAlpha', 0.3);
 hold on;
 plot(F0_true/1e9, N_true, 'r+', 'MarkerSize', 15, 'LineWidth', 3);
-xlabel('F_0 (GHz)', 'FontName', 'SimHei');
-ylabel('N', 'FontName', 'SimHei');
 set(gca, 'FontSize', 10); grid on;
+xlabel('F_0 (GHz)', 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('N', 'FontName', 'SimHei', 'Interpreter', 'none');
 
 subplot(3,3,8);
 scatter(samples_BW_valid(1:20:end)/1e9, samples_N_valid(1:20:end), 8, colors.blue, 'filled', 'MarkerFaceAlpha', 0.3);
 hold on;
 plot(BW_true/1e9, N_true, 'r+', 'MarkerSize', 15, 'LineWidth', 3);
-xlabel('BW (GHz)', 'FontName', 'SimHei');
-ylabel('N', 'FontName', 'SimHei');
 set(gca, 'FontSize', 10); grid on;
+xlabel('BW (GHz)', 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('N', 'FontName', 'SimHei', 'Interpreter', 'none');
 % 标注负相关椭圆
-text(7.3, 5.8, '负相关椭圆', 'FontSize', 10, 'FontName', 'SimHei', 'Color', colors.red);
+text(7.3, 5.8, '负相关椭圆', 'FontSize', 10, 'FontName', 'SimHei', 'Color', colors.red, 'Interpreter', 'none');
 
-% 上三角: 相关系数
+% 上三角: 相关系数（使用LaTeX渲染数学符号）
 subplot(3,3,2);
 rho_F0_BW = corr(samples_F0_valid, samples_BW_valid);
-text(0.5, 0.5, sprintf('\\rho(F_0,BW)\n= %.2f', rho_F0_BW), 'HorizontalAlignment', 'center', 'FontSize', 14);
+text(0.5, 0.5, sprintf('$\\rho(F_0, \\mathrm{BW})=%.2f$', rho_F0_BW), ...
+    'HorizontalAlignment', 'center', 'FontSize', 14, 'Interpreter', 'latex');
 axis off;
 
 subplot(3,3,3);
 rho_F0_N = corr(samples_F0_valid, samples_N_valid);
-text(0.5, 0.5, sprintf('\\rho(F_0,N)\n= %.2f', rho_F0_N), 'HorizontalAlignment', 'center', 'FontSize', 14);
+text(0.5, 0.5, sprintf('$\\rho(F_0, N)=%.2f$', rho_F0_N), ...
+    'HorizontalAlignment', 'center', 'FontSize', 14, 'Interpreter', 'latex');
 axis off;
 
 subplot(3,3,6);
 rho_BW_N = corr(samples_BW_valid, samples_N_valid);
-text(0.5, 0.5, sprintf('\\rho(BW,N)\n= %.2f', rho_BW_N), 'HorizontalAlignment', 'center', 'FontSize', 14, 'Color', colors.red);
+text(0.5, 0.5, sprintf('$\\rho(\\mathrm{BW}, N)=%.2f$', rho_BW_N), ...
+    'HorizontalAlignment', 'center', 'FontSize', 14, 'Interpreter', 'latex', 'Color', colors.red);
 axis off;
 
-sgtitle('图5-11 Butterworth参数联合后验分布Corner Plot', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei');
+sgtitle('图5-11 Butterworth参数联合后验分布Corner Plot', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
 
 print('-dpng', '-r300', [output_dir, '图5-11_滤波器CornerPlot.png']);
 fprintf('  已保存: 图5-11_滤波器CornerPlot.png\n');
@@ -456,26 +463,28 @@ h2 = plot(f_theory/1e9, tau_theory*1e9, 'g--', 'LineWidth', 2);
 
 colormap(flipud(gray(256)));
 cb = colorbar;
-ylabel(cb, '权重', 'FontSize', 11, 'FontName', 'SimHei');
+ylabel(cb, '权重', 'FontSize', 11, 'FontName', 'SimHei', 'Interpreter', 'none');
 
-xlabel('频率 f (GHz)', 'FontSize', 13, 'FontName', 'SimHei');
-ylabel('群时延 \tau_g (ns)', 'FontSize', 13, 'FontName', 'SimHei');
-title('图5-12 MCMC拟合验证', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei');
-
-legend([h1, h2], {'后验均值曲线', '真值曲线'}, 'Location', 'northeast', 'FontSize', 11);
 set(gca, 'FontName', 'Times New Roman', 'FontSize', 12, 'LineWidth', 1.2);
 xlim([f_start/1e9, f_end/1e9]);
 ylim([0, 2.2]);
 grid on; box on;
 
+xlabel('频率 f (GHz)', 'FontSize', 13, 'FontName', 'SimHei', 'Interpreter', 'none');
+ylabel('群时延 τ_g (ns)', 'FontSize', 13, 'FontName', 'SimHei', 'Interpreter', 'none');
+title('图5-12 MCMC拟合验证', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
+
+lgd = legend([h1, h2], {'后验均值曲线', '真值曲线'}, 'Location', 'northeast');
+set(lgd, 'FontName', 'SimHei', 'FontSize', 11, 'Interpreter', 'none');
+
 % 标注置信带
-text(11, 1.8, '灰色区域: 95%置信带', 'FontSize', 10, 'FontName', 'SimHei', 'Color', colors.gray);
+text(11, 1.8, '灰色区域: 95%置信带', 'FontSize', 10, 'FontName', 'SimHei', 'Color', colors.gray, 'Interpreter', 'none');
 
 % 计算拟合RMSE
 tau_esprit_fit = calculate_filter_group_delay(f_esprit, F0_mean, BW_mean, N_mean);
 rmse_fit = sqrt(mean((tau_esprit - tau_esprit_fit).^2));
 text(11, 0.3, sprintf('拟合RMSE ≈ %.2f ns', rmse_fit*1e9), 'FontSize', 11, 'FontName', 'SimHei', ...
-    'BackgroundColor', 'w', 'EdgeColor', 'k');
+    'BackgroundColor', 'w', 'EdgeColor', 'k', 'Interpreter', 'none');
 
 print('-dpng', '-r300', [output_dir, '图5-12_滤波器拟合验证.png']);
 fprintf('  已保存: 图5-12_滤波器拟合验证.png\n');

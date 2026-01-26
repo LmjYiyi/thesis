@@ -13,6 +13,12 @@
 
 clear; clc; close all;
 
+% 全局默认字体与解释器设置（论文级稳定）
+set(groot, 'defaultTextInterpreter', 'none');
+set(groot, 'defaultAxesTickLabelInterpreter', 'none');
+set(groot, 'defaultLegendInterpreter', 'none');
+set(groot, 'defaultTextFontName', 'Microsoft YaHei');
+
 %% 1. 参数设置
 f_s = 1e6;                  % 采样率 (Hz)
 N_samples = 48;             % 窗口内采样点数 (对应12μs窗口)
@@ -130,13 +136,18 @@ xline(K_true, 'k--', 'LineWidth', 1.5, 'HandleVisibility', 'off');
 text(K_true + 0.15, max(MDL_results(:))*0.9, sprintf('K_{true} = %d', K_true), ...
     'FontSize', 11, 'FontWeight', 'bold');
 
-xlabel('候选信源数 k', 'FontSize', 12);
-ylabel('MDL 代价函数值 (归一化)', 'FontSize', 12);
-title('(a) MDL准则：不同SNR下的性能', 'FontSize', 12, 'FontWeight', 'bold');
-legend('Location', 'northeast', 'FontSize', 10);
+xlabel('候选信源数 k', 'FontSize', 12, 'FontName', 'Microsoft YaHei', 'Interpreter', 'none');
+ylabel('MDL 代价函数值 (归一化)', 'FontSize', 12, 'FontName', 'Microsoft YaHei', 'Interpreter', 'none');
+title('(a) MDL准则：不同SNR下的性能', 'FontSize', 12, 'FontWeight', 'bold', 'FontName', 'Microsoft YaHei', 'Interpreter', 'none');
+legend('Location', 'northeast', 'FontSize', 10, 'FontName', 'Times New Roman');
 grid on; box on;
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 11);
-set(gca, 'LineWidth', 1.2);
+ax = gca;
+ax.FontName = 'Times New Roman';          % 刻度字体
+ax.FontSize = 11;
+ax.LineWidth = 1.2;
+ax.XLabel.FontName = 'Microsoft YaHei';   % 中文
+ax.YLabel.FontName = 'Microsoft YaHei';
+ax.Title.FontName = 'Microsoft YaHei';
 xlim([-0.5, 5.5]);
 xticks(0:5);
 
@@ -179,16 +190,22 @@ text(K_true + 0.15, max(MDL_results(3,:))*0.9, sprintf('K_{true} = %d', K_true),
 [~, aic_min_idx] = min(AIC_10dB_adjusted);
 if k_candidates(aic_min_idx) > K_true
     text(k_candidates(aic_min_idx) + 0.1, AIC_10dB_adjusted(aic_min_idx) + max(AIC_10dB_adjusted)*0.1, ...
-        'AIC过估计', 'Color', [0.8500, 0.3250, 0.0980], 'FontSize', 10);
+        'AIC过估计', 'Color', [0.8500, 0.3250, 0.0980], 'FontSize', 10, ...
+        'FontName', 'Microsoft YaHei', 'Interpreter', 'none');
 end
 
-xlabel('候选信源数 k', 'FontSize', 12);
-ylabel('代价函数值 (归一化)', 'FontSize', 12);
-title('(b) MDL vs AIC对比（低SNR条件）', 'FontSize', 12, 'FontWeight', 'bold');
-legend('Location', 'northeast', 'FontSize', 10);
+xlabel('候选信源数 k', 'FontSize', 12, 'FontName', 'Microsoft YaHei', 'Interpreter', 'none');
+ylabel('代价函数值 (归一化)', 'FontSize', 12, 'FontName', 'Microsoft YaHei', 'Interpreter', 'none');
+title('(b) MDL vs AIC对比（低SNR条件）', 'FontSize', 12, 'FontWeight', 'bold', 'FontName', 'Microsoft YaHei', 'Interpreter', 'none');
+legend('Location', 'northeast', 'FontSize', 10, 'FontName', 'Times New Roman');
 grid on; box on;
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 11);
-set(gca, 'LineWidth', 1.2);
+ax = gca;
+ax.FontName = 'Times New Roman';          % 刻度字体
+ax.FontSize = 11;
+ax.LineWidth = 1.2;
+ax.XLabel.FontName = 'Microsoft YaHei';   % 中文
+ax.YLabel.FontName = 'Microsoft YaHei';
+ax.Title.FontName = 'Microsoft YaHei';
 xlim([-0.5, 5.5]);
 xticks(0:5);
 

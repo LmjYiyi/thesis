@@ -22,6 +22,38 @@ description: MATLAB仿真代码与论文章节的映射参考
 | `LFMCW_filter_MCMC.m` | **5.2** | 滤波器三参数MCMC反演 |
 | `initial.m` | **5.3.2** | 系统标定/传统方法对比 |
 
+
+## 终稿绘图代码索引 (final_output/figure_code)
+
+> ⚠️ 注意：此目录下的代码为论文终稿专用绘图脚本，经过美化和格式统一。
+
+| 代码文件 | 对应图号 | 功能描述 |
+|:---|:---|:---|
+| `plot_fig_3_2_0_matlab_theory.m` | **Fig 3.2** | 理论基准：群时延与频率关系 |
+| `plot_fig_3_2_1_ne_sensitivity.m` | **Fig 3.2** | 参数分析：电子密度($n_e$)敏感性 |
+| `plot_fig_3_2_2_nue_sensitivity.m` | **Fig 3.2** | 参数分析：碰撞频率($\nu_e$)敏感性 |
+| `plot_fig_3_2_3_4_cst_density.m` | **Fig 3.2** | CST仿真：不同密度下的响应对比 |
+| `plot_fig_3_2_5_multisolution.m` | **Fig 3.2** | 诊断困难：多解性问题可视化 |
+| `plot_fig_3_2_time_frequency_spectrogram_SIMPLE.m` | **Fig 3.2** | 演示：时频图(Spectrogram)基本特征 |
+| `plot_fig_3_4.m` | **Fig 3.4** | 色散效应：差频信号频谱畸变 |
+| `plot_fig_3_4_spectrum_dispersion.m` | **Fig 3.4** | 补充：频谱色散细节 |
+| `plot_fig_3_5_6_bandwidth_dispersion_effects.m` | **Fig 3.5-3.6** | 带宽效应：不同带宽下的去调频结果 |
+| `plot_fig_3_7.m` | **Fig 3.7** | 工程判据：参数空间分布 |
+| `plot_fig_3_7_bandwidth_zero_point.m` | **Fig 3.7** | 细节：零点带宽分析 |
+| `plot_fig_3_7_criterion_parameter_space.m` | **Fig 3.7** | 细节：判据参数空间 |
+| `plot_fig_4_1_sensitivity_comparison.m` | **Fig 4.1** | 诊断动机：高/低频波段敏感性对比 |
+| `plot_fig_4_2_flat_valley_3d.m` | **Fig 4.2** | 反演难点：目标函数"平底谷"三维形貌 |
+| `plot_fig_4_3_posterior_comparison.m` | **Fig 4.3** | 贝叶斯推断：先验与后验分布对比 |
+| `plot_fig_4_4_spectrogram.m` | **Fig 4.4** | 预处理：含噪信号时频特征提取 |
+| `plot_fig_4_5_mdl_criterion.m` | **Fig 4.5** | 模型选择：MDL准则阶数判定 |
+| `plot_fig_4_6_feature_trajectory.m` | **Fig 4.6** | 过程可视化：MCMC马尔可夫链轨迹 |
+| `plot_fig_4_7.m` | **Fig 4.7** | 验证I：Drude模型拟合效果(时域/频域) |
+| `plot_fig_4_8.m` | **Fig 4.8** | 验证II：参数联合后验分布(Corner Plot) |
+| `plot_fig_4_9.m` | **Fig 4.9** | 验证III：反演结果置信带与真值对比 |
+| `plot_fig_4_10_4_11.m` | **Fig 4.10-4.11** | 复杂场景：非均匀/时变等离子体反演 |
+| `plot_fig_4_12_robustness.m` | **Fig 4.12** | 性能评估：不同SNR下的算法鲁棒性 |
+| `plot_fig_5_7_to_5_12_butterworth.m` | **Fig 5.7-5.12** | 普适性验证：Butterworth滤波器实验系列 |
+
 ---
 
 ## LM_MCMC_with_noise.m 详细参数（4.4节专用）

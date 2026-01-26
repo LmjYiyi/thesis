@@ -1,0 +1,213 @@
+26/Jan/2026 03:12:48  Build version: 2022.4 Release from 2022-04-26 (change 967892)
+
+26/Jan/2026 03:12:48  Starting adaptive port meshing.
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:12:48  Mode calculation for port 1:
+                      
+                      ------------------------------------------------------------------------------
+
+                      ------------------------------------------------------------------------------
+
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:12:51  Using generalized port mode solver.
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:12:51  Automatically activated electric shielding for port 1.
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:12:52    -------------------------------- F-Calc 35 ---------------------------------
+                        Port   Mode   Type        Z-Wave        Z-Wave-Sigma  Z-Line        F-Cutoff
+                        1      1      TE          472           1.04e-005     ---           21.06
+                        ----------------------------------------------------------------------------
+                      
+26/Jan/2026 03:12:53  Pass 1 successfully completed. 
+26/Jan/2026 03:12:53  Mode calculation for port 2:
+                      
+                      ------------------------------------------------------------------------------
+
+                      ------------------------------------------------------------------------------
+
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:12:54  Using generalized port mode solver.
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:12:54  Automatically activated electric shielding for port 2.
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:12:55    -------------------------------- F-Calc 35 ---------------------------------
+                        Port   Mode   Type        Z-Wave        Z-Wave-Sigma  Z-Line        F-Cutoff
+                        2      1      TE          472           1.04e-005     ---           21.06
+                        ----------------------------------------------------------------------------
+                      
+26/Jan/2026 03:12:55  Pass 1 successfully completed. 
+26/Jan/2026 03:12:55  Adaptive port meshing finished. 
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:12:56  
+                      Solver started at: 03:12 AM Monday, 26. January 2026 (中国标准时间)
+                      
+                        Module:  Time Domain: S-Parameter (Win 64)
+                        Version: 2022.4 Release from 2022-04-26 (change 967892)
+                      
+
+                      ------------------------------------------------------------------------------
+
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:12:56  ======================================================================
+                       Solver cycle: 1
+                      ======================================================================
+                      
+                      Stimulation at port 1 (mode 1) 
+                      
+                      
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:12:56  Units settings: 
+                      
+                        Dimensions: mm
+                        Frequency:  GHz
+                        Time:       ns
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:12:56  The dispersive material update [Automatic] will be performed using the "Standard" update schema
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:14:01  Mesh statistics:
+                      
+                         Hexahedral mesh type: PERFECT BOUNDARY APPROXIMATION (PBA) (R)
+                            Version: default
+                      
+                         Parallelization type: domain decomposition
+                            Number of parallel working threads: 1
+                            Number of calculation domains used: 1
+                      
+                         Used point accuracy enhancement value: 75.00%.
+                         Acceleration mode: CPU
+                         PBA fill limit: 99.00% (inverse)
+
+26/Jan/2026 03:14:01  Using generalized port mode solver.
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:14:01  Automatically activated electric shielding for port 1, 2.
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:14:01  Boundary conditions: 
+                      
+                        YZsymmetry: none
+                        XZsymmetry: none
+                        XYsymmetry: none
+                      
+                        Xmin: electric
+                        Xmax: electric
+                      
+                        Ymin: electric
+                        Ymax: electric
+                      
+                        Zmin: open, 4 Layer, depth 1.94843 mm
+                        Zmax: open, 4 Layer, depth 1.94843 mm
+                      
+                        PML-Type: Convolution PML
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:14:01  Frequency settings: 
+                      
+                        Fmin:         30
+                        Fmax:         40
+                        Nfsteps(lin): 1001
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:14:02  Field update statistics:
+                      
+                        Number of components in total: 	107898
+                      
+                      Subcycling state:      Automatically deactivated
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:14:02  Waveguide boundaries:
+                      
+26/Jan/2026 03:14:02  Port: 1
+                      
+26/Jan/2026 03:14:02    -------------------------------- F-Calc 35 ---------------------------------
+                        Port   Mode   Type        Z-Wave        Z-Wave-Sigma  Z-Line        F-Cutoff
+                        1      1      TE          472           1.04e-005     ---           21.06
+                        ----------------------------------------------------------------------------
+                      
+26/Jan/2026 03:14:02  Port: 2
+                      
+26/Jan/2026 03:14:02    -------------------------------- F-Calc 35 ---------------------------------
+                        Port   Mode   Type        Z-Wave        Z-Wave-Sigma  Z-Line        F-Cutoff
+                        2      1      TE          472           1.08e-005     ---           21.06
+                        ----------------------------------------------------------------------------
+                      
+26/Jan/2026 03:14:07  
+                      --------------------------------------------------------------------------------
+26/Jan/2026 03:14:07  Steady state energy criterion met, solver finished successfully.
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:14:07  Frequency domain results normalized to default signal.
+                      
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:14:07  
+                        ----------------------------------------------------------------------------
+                                            Peak memory used (kB)         Free physical memory (kB) 
+                                                                          At begin     Minimum      
+                        ----------------------------------------------------------------------------
+                        CAD preparation     24040                         1641520      1641520      
+                        Matrices calc.      54687                         1623046      1619140      
+                        Solver run total    50928                         1646024      1620060      
+                        ----------------------------------------------------------------------------
+                      
+                      --------------------------------------------------------------------------------
+                      Solver Statistics:
+                      
+                        Hardware:
+                           Computer name:                 	DESKTOP-01HN1VE 
+                      
+                           Number of CPU threads:               6
+                           Hardware info:                  	Hardware Accelerator Device not activated
+                      
+                        Number of mesh cells:             	16800
+                        Excitation duration:              	7.10909750e-001 ns 
+                        Calculation time for excitation:  	0 	s
+                        Number of calculated pulse widths:	12.6803 
+                        Steady state accuracy limit:      	-40	dB 
+                        Simulated number of time steps:   	39456 
+                        Maximum number of time steps:     	62231 
+                        Time step width:
+                           without subcycles:             	2.284710327e-004 ns
+                           used:                          	2.284710327e-004 ns
+                      
+                        CAD preparation time:             	0      	s
+                        Matrix calculation time:          	64 	s
+                        Solver setup time:                	2 	s
+                        Solver loop time:                 	3 	s
+                        Solver post-processing time:      	0 	s
+                                                          	------------
+                        Total solver time:                	69 	s  ( = 0 h, 1 m, 9 s )
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:14:08  ======================================================================
+                       TD-Solver detected a unitary device (two-port reciprocity).
+                       S-parameters of the second run will be calculated from
+                       the results of the first run.
+                      ======================================================================
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:14:08  Structure contains lossy materials or boundaries. Two-port reciprocity may produce inaccurate results. More...
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:14:08  
+                        Adaptive port meshing time:          	9      	s
+                        Total solver time (all cycles):      	69     	s  ( = 0 h, 1 m, 9 s )
+                        Solver initialization and clean-up:  	2      	s
+                                                             	------------
+                        Total simulation time:               	80     	s  ( = 0 h, 1 m, 20 s )
+                      
+                      ------------------------------------------------------------------------------
+26/Jan/2026 03:14:08  Solver finished at: 03:14 AM Monday, 26. January 2026
+                      
+                      
+                      
+                      ------------------------------------------------------------------------------
