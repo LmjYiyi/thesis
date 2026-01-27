@@ -155,61 +155,100 @@ s_if_plasma_win = s_if_plasma .* win;
 S_IF_plasma = fft(s_if_plasma_win, N);
 S_IF_plasma_mag = abs(S_IF_plasma) * 2; % 补偿窗函数幅度损失
 
-%% 6. 可视化 (Figure 1 - 8)
+%% 6. 可视化 (Figure 1 - 3: 合并显示)
 
 % 辅助变量：限制频谱显示范围
 f_range = [f_start-0.5e9, f_end+0.5e9];
 f_indices = find(f >= f_range(1) & f <= f_range(2));
 
-% --- Figure 1: 时域对比 ---
-figure(1);
+% -------------------------------------------------------------
+% Figure 1: 发射信号 vs 空气接收 (合并原 Figure 1 & 2)
+% -------------------------------------------------------------
+figure(1); clf;
+set(gcf, 'Position', [100, 100, 1000, 400]); % 调整宽屏显示
+
+% 准备绘图数据
 t_display = min(5e-6, T_m); 
 idx_display = round(t_display/t_s);
-plot(t(1:idx_display)*1e6, s_tx(1:idx_display), 'b', t(1:idx_display)*1e6, s_rx_air(1:idx_display), 'r--');
-xlabel('时间 (μs)'); ylabel('幅值'); title('Figure 1: 发射信号 vs 空气接收'); grid on;
-
-% --- Figure 2: 频域对比 (修正了报错) ---
-figure(2);
 S_TX_mag = abs(fft(s_tx));
 S_RX_air_mag = abs(fft(s_rx_air));
-% 直接画有效范围，不画全谱，避免报错
+
+% 左子图: 时域
+subplot(1, 2, 1);
+plot(t(1:idx_display)*1e6, s_tx(1:idx_display), 'b', t(1:idx_display)*1e6, s_rx_air(1:idx_display), 'r--');
+xlabel('时间 (μs)'); ylabel('幅值'); 
+title('发射信号 vs 空气接收 (时域)'); 
+legend('Tx', 'Rx Air'); grid on;
+
+% 右子图: 频域
+subplot(1, 2, 2);
 plot(f(f_indices)/1e9, S_TX_mag(f_indices), 'b', f(f_indices)/1e9, S_RX_air_mag(f_indices), 'r--');
-xlabel('频率 (GHz)'); title('Figure 2: 发射 vs 空气接收 (频谱)'); grid on;
+xlabel('频率 (GHz)'); ylabel('幅度');
+title('发射 vs 空气接收 (频谱)'); 
+legend('Tx', 'Rx Air'); grid on;
 
-% --- Figure 3: 时域对比 (等离子体 - 含噪声) ---
-figure(3);
-plot(t(1:idx_display)*1e6, s_tx(1:idx_display), 'b', t(1:idx_display)*1e6, real(s_rx_plasma(1:idx_display)), 'r--');
-xlabel('时间 (μs)'); title('Figure 3: 发射信号 vs 等离子体接收 (含噪)'); grid on;
+% -------------------------------------------------------------
+% Figure 2: 发射信号 vs 等离子体接收 (合并原 Figure 3 & 4)
+% -------------------------------------------------------------
+figure(2); clf;
+set(gcf, 'Position', [150, 150, 1000, 400]);
 
-% --- Figure 4: 频域对比 (等离子体 - 含噪声) ---
-figure(4);
+% 准备绘图数据
 S_RX_plasma_mag_plot = abs(S_RX_plasma_fft);
+
+% 左子图: 时域 (含噪声)
+subplot(1, 2, 1);
+plot(t(1:idx_display)*1e6, s_tx(1:idx_display), 'b', t(1:idx_display)*1e6, real(s_rx_plasma(1:idx_display)), 'r--');
+xlabel('时间 (μs)'); ylabel('幅值'); 
+title('发射信号 vs 等离子体接收 (含噪)'); 
+legend('Tx', 'Rx Plasma'); grid on;
+
+% 右子图: 频域 (含噪声)
+subplot(1, 2, 2);
 plot(f(f_indices)/1e9, S_TX_mag(f_indices), 'b', f(f_indices)/1e9, S_RX_plasma_mag_plot(f_indices), 'r--');
-xlabel('频率 (GHz)'); title('Figure 4: 发射 vs 等离子体接收 (频谱,含噪)'); grid on;
+xlabel('频率 (GHz)'); ylabel('幅度');
+title('发射 vs 等离子体接收 (频谱,含噪)'); 
+legend('Tx', 'Rx Plasma'); grid on;
 
-% --- Figure 5-8: 差频信号显示 ---
-% Figure 5: Air Time
-figure(5);
-t_if_disp = min(20e-6, T_m); idx_if = round(t_if_disp/t_s);
+% -------------------------------------------------------------
+% Figure 3: 差频信号分析 (合并原 Figure 5, 6, 7, 8)
+% 布局: 左列(空气 5,6), 右列(等离子体 7,8)
+%       上排(时域 5,7), 下排(频域 6,8)
+% -------------------------------------------------------------
+figure(3); clf;
+set(gcf, 'Position', [200, 200, 1000, 700]);
+
+% 准备绘图数据
+t_if_disp = min(20e-6, T_m); 
+idx_if = round(t_if_disp/t_s);
+f_if_lim = 1e6; 
+idx_if_f = round(f_if_lim/(f_s/N));
+
+% 子图 1 (左上): 空气差频 (时域)
+subplot(2, 2, 1);
 plot(t(1:idx_if)*1e6, s_if_air(1:idx_if), 'b');
-title('Figure 5: 空气差频 (时域)'); grid on;
+xlabel('时间 (μs)'); ylabel('幅值');
+title('空气差频 (时域)'); grid on;
 
-% Figure 6: Air Freq
-figure(6);
-f_if_lim = 1e6; idx_if_f = round(f_if_lim/(f_s/N));
+% 子图 2 (右上): 等离子体差频 (时域, 含噪)
+subplot(2, 2, 2);
+plot(t(1:idx_if)*1e6, s_if_plasma(1:idx_if), 'b');
+xlabel('时间 (μs)'); ylabel('幅值');
+title('等离子体差频 (时域, 含噪)'); grid on;
+
+% 子图 3 (左下): 空气差频 (频谱)
+subplot(2, 2, 3);
 stem(f(1:idx_if_f)/1e3, S_IF_air_mag(1:idx_if_f), 'b', 'MarkerSize', 2);
 xline(f_beat_air_theory/1e3, 'r--', 'LineWidth', 2);
-title('Figure 6: 空气差频 (频谱)'); grid on;
+xlabel('频率 (kHz)'); ylabel('幅度');
+title('空气差频 (频谱)'); 
+legend('Sim', 'Theory'); grid on;
 
-% Figure 7: Plasma Time (含噪声)
-figure(7);
-plot(t(1:idx_if)*1e6, s_if_plasma(1:idx_if), 'b');
-title('Figure 7: 等离子体差频 (时域,含噪)'); grid on;
-
-% Figure 8: Plasma Freq (含噪声)
-figure(8);
+% 子图 4 (右下): 等离子体差频 (频谱, 含噪)
+subplot(2, 2, 4);
 stem(f(1:idx_if_f)/1e3, S_IF_plasma_mag(1:idx_if_f), 'b', 'MarkerSize', 2);
-title('Figure 8: 等离子体差频 (频谱,含噪)'); grid on;
+xlabel('频率 (kHz)'); ylabel('幅度');
+title('等离子体差频 (频谱, 含噪)'); grid on;
 
 % --- 新增 Figure 9: SNR 可视化对比 ---
 figure(10);

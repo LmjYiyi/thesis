@@ -369,49 +369,9 @@ colors.red = [0.8500, 0.3250, 0.0980];
 colors.gray = [0.5, 0.5, 0.5];
 colors.green = [0.4660, 0.6740, 0.1880];
 
-figure('Position', [50, 50, 1400, 900], 'Color', 'w');
+figure('Position', [50, 50, 900, 600], 'Color', 'w');
 
-%% ========== 子图 (a): FFT频谱对比 ==========
-subplot(2, 2, 1);
-
-% 先设置坐标轴属性
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 11, 'LineWidth', 1.2, 'Box', 'on');
-hold on;
-
-% 归一化频谱
-mag_strong_norm = mag_strong_plot / max(mag_strong_plot);
-mag_weak_norm = mag_weak_plot / max(mag_weak_plot);
-
-% 绘制
-plot(f_axis_plot/1e3, mag_weak_norm, '-', 'Color', colors.blue, 'LineWidth', 2);
-plot(f_axis_plot/1e3, mag_strong_norm, '-', 'Color', colors.red, 'LineWidth', 2);
-yline(1/sqrt(2), 'k--', 'LineWidth', 1);
-
-% 设置显示范围
-x_center = (f_peak_strong + f_peak_weak) / 2;
-x_span = 1.5e6;
-xlim([(x_center - x_span)/1e3, (x_center + x_span)/1e3]);
-ylim([0, 1.15]);
-
-% 中文标签 - 必须在set(gca,...)之后
-xlabel('差频频率 (kHz)', 'FontName', 'SimHei', 'FontSize', 11);
-ylabel('归一化幅度', 'FontName', 'SimHei', 'FontSize', 11);
-title('(a) 差频信号FFT频谱对比', 'FontName', 'SimHei', 'FontSize', 12, 'FontWeight', 'bold');
-
-legend({sprintf('弱色散 (f_p=%d GHz)', f_c_weak/1e9), ...
-        sprintf('强色散 (f_p=%d GHz)', f_c_strong/1e9), ...
-        '-3dB线'}, ...
-        'Location', 'northeast', 'FontName', 'SimHei', 'FontSize', 9);
-grid on;
-
-% 带宽标注
-text(f_peak_weak/1e3, 1.05, sprintf('BW≈%.0f kHz', bw_weak/1e3), ...
-    'Color', colors.blue, 'FontSize', 9, 'HorizontalAlignment', 'center', 'FontName', 'SimHei');
-text(f_peak_strong/1e3, 0.6, sprintf('BW≈%.0f kHz\n(频谱散焦)', bw_strong/1e3), ...
-    'Color', colors.red, 'FontSize', 9, 'HorizontalAlignment', 'center', 'FontName', 'SimHei');
-
-%% ========== 子图 (b): 时延轨迹对比（全景） ==========
-subplot(2, 2, [2, 4]);
+%% ========== 时延轨迹对比（全景） ==========
 
 % 先设置坐标轴
 set(gca, 'FontName', 'Times New Roman', 'FontSize', 11, 'LineWidth', 1.2, 'Box', 'on');
@@ -431,7 +391,7 @@ cb = colorbar;
 % 中文标签
 xlabel('探测频率 (GHz)', 'FontName', 'SimHei', 'FontSize', 11);
 ylabel('相对群时延 Δτ (ns)', 'FontName', 'SimHei', 'FontSize', 11);
-title(sprintf('(b) 时延轨迹对比 (f_p = %d GHz, SNR = %d dB)', f_c_strong/1e9, SNR_dB), ...
+title(sprintf('时延轨迹对比 (f_p = %d GHz, SNR = %d dB)', f_c_strong/1e9, SNR_dB), ...
     'FontName', 'SimHei', 'FontSize', 12, 'FontWeight', 'bold');
 ylabel(cb, '信号幅度权重', 'FontName', 'SimHei', 'FontSize', 10);
 
@@ -451,54 +411,8 @@ patch([x_highlight(1), x_highlight(2), x_highlight(2), x_highlight(1)], ...
 text(34.6, y_max*0.95, '强色散区', 'FontSize', 10, 'FontWeight', 'bold', ...
     'Color', [0.6 0.4 0], 'FontName', 'SimHei', 'HorizontalAlignment', 'center');
 
-%% ========== 子图 (c): 局部放大 ==========
-subplot(2, 2, 3);
-
-% 先设置坐标轴
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 11, 'LineWidth', 1.2, 'Box', 'on');
-hold on;
-
-% 放大区域: 34.2 - 35.0 GHz
-f_zoom_min = 34.2e9;
-f_zoom_max = 35.0e9;
-
-% 筛选数据
-zoom_mask_esprit = (f_esprit_valid >= f_zoom_min) & (f_esprit_valid <= f_zoom_max);
-zoom_mask_fft = (f_fft_valid >= f_zoom_min) & (f_fft_valid <= f_zoom_max);
-zoom_mask_theory = (f_theory >= f_zoom_min) & (f_theory <= f_zoom_max);
-
-% 理论曲线
-plot(f_theory(zoom_mask_theory)/1e9, tau_theory_strong(zoom_mask_theory)*1e9, ...
-    '-', 'Color', colors.red, 'LineWidth', 2.5);
-
-% FFT结果
-if any(zoom_mask_fft)
-    plot(f_fft_valid(zoom_mask_fft)/1e9, tau_fft_valid(zoom_mask_fft)*1e9, ...
-        '--', 'Color', colors.gray, 'LineWidth', 1.5);
-end
-
-% ESPRIT结果
-if any(zoom_mask_esprit)
-    scatter(f_esprit_valid(zoom_mask_esprit)/1e9, tau_esprit_valid(zoom_mask_esprit)*1e9, ...
-        40, colors.blue, 'filled');
-end
-
-% 中文标签
-xlabel('探测频率 (GHz)', 'FontName', 'SimHei', 'FontSize', 11);
-ylabel('相对群时延 Δτ (ns)', 'FontName', 'SimHei', 'FontSize', 11);
-title(sprintf('(c) 局部放大: f ∈ [%.1f, %.1f] GHz', f_zoom_min/1e9, f_zoom_max/1e9), ...
-    'FontName', 'SimHei', 'FontSize', 12, 'FontWeight', 'bold');
-
-legend({'Drude理论曲线', '传统FFT方法', '本文ESPRIT方法'}, ...
-    'Location', 'northeast', 'FontName', 'SimHei', 'FontSize', 9);
-
-xlim([f_zoom_min/1e9, f_zoom_max/1e9]);
-tau_zoom_theory = tau_theory_strong(zoom_mask_theory);
-ylim([0, max(tau_zoom_theory)*1e9*1.3]);
-grid on;
-
-% 误差统计标注框
-annotation('textbox', [0.13, 0.08, 0.35, 0.08], ...
+% 误差统计标注框 (移至图右下方)
+annotation('textbox', [0.58, 0.18, 0.25, 0.12], ...
     'String', {sprintf('ESPRIT RMSE = %.2f ns', esprit_rmse), ...
                sprintf('FFT RMSE = %.2f ns', fft_rmse), ...
                sprintf('精度提升: %.1f 倍', fft_rmse/esprit_rmse)}, ...

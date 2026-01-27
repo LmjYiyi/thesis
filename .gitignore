@@ -18,3 +18,14 @@ ModelCache/
 # OS
 Thumbs.db
 .DS_Store
+
+# Office / Pandoc / temp artifacts
+~$*.docx
+final_output/docs/_pandoc_path_test.docx
+final_output/temp/
+final_output/temp_no_images.md
+final_output/temp_no_images_utf8.md
+final_output/test_img.md
+
+## Pandoc image aliases
+## （你已要求保留这些png，因此不再忽略）

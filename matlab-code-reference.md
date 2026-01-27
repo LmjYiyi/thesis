@@ -20,7 +20,7 @@ description: MATLAB仿真代码与论文章节的映射参考
 | `extract_lorentz_params_from_s21.m` | **5.1.2** | S21参数拟合Lorentz模型 |
 | `LM_lorentz_CST_LFMCW.m` | **5.1.3** | CST数据LFMCW信号处理+MCMC |
 | `LFMCW_filter_MCMC.m` | **5.2** | 滤波器三参数MCMC反演 |
-| `initial.m` | **5.3.2** | 系统标定/传统方法对比 |
+| `initial.m` | **5.3.2** | 系统标定/4.4传统方法对比 |
 
 
 ## 终稿绘图代码索引 (final_output/figure_code)

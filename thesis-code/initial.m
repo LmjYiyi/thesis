@@ -18,7 +18,7 @@ f_s = 80e9;
 tau_air = 4e-9;              
 tau_fs = 1.75e-9;            
 d = 150e-3;                  
-f_c = 30e9;                  
+f_c = 33e9;                  
 nu = 1.5e9;                  
 
 % 计算派生参数 (修正 n_e 定义防止报错)
@@ -40,14 +40,10 @@ idx_neg = f >= f_s/2;
 f(idx_neg) = f(idx_neg) - f_s;
 omega = 2*pi*f;              
 
-fprintf('仿真参数设置完成\n');
-fprintf('电子密度 n_e: %.2e m^-3\n', n_e);
-
 %% 2. LFMCW信号生成模块 (保持不变)
 f_t = f_start + K*mod(t, T_m);  
 phi_t = 2*pi*cumsum(f_t)*t_s;   
 s_tx = cos(phi_t);              
-fprintf('LFMCW信号生成完成\n');
 
 %% 3. 信号传播模拟模块 (修正符号约定版)
 
@@ -95,7 +91,6 @@ s_after_plasma = real(ifft(S_after_plasma));
 % 步骤4: 第二段自由空间
 s_rx_plasma = [zeros(1, delay_samples_fs) s_after_plasma(1:end-delay_samples_fs)];
 
-fprintf('等离子体传播模拟完成 (已修复符号约定导致的增益爆炸)\n');
 %% 4. 混频处理与差频信号提取
 
 % 4.1 空气介质混频
@@ -110,8 +105,6 @@ s_if_air = filtfilt(b_lp, a_lp, s_mix_air);
 % 4.2 等离子体介质混频
 s_mix_plasma = s_tx .* real(s_rx_plasma);
 s_if_plasma = filtfilt(b_lp, a_lp, s_mix_plasma);
-
-fprintf('混频处理与差频信号提取完成\n');
 
 %% 5. 基础频域分析 (FFT) - 仅用于绘图数据准备
 
@@ -129,8 +122,6 @@ S_IF_plasma = fft(s_if_plasma_win, N);
 S_IF_plasma_mag = abs(S_IF_plasma) * 2; % 补偿窗函数幅度损失
 
 %% 6. 可视化 (Figure 1 - 8) - 严格保持原始波形与频谱
-% 说明：此部分仅负责绘图，不进行任何额外的算法处理，确保 Fig6/8 与原版一致
-fprintf('正在绘制基础波形 (保持 Figure 6/8 原貌)...\n');
 
 % -------------------------------------------------------------------------
 % 1. 绘图数据准备 (直接读取 Section 5 的结果)
@@ -144,31 +135,48 @@ mag_air_plot = S_IF_air_mag(1:L_half);      % 空气 (无窗/矩形窗)
 mag_plasma_plot = S_IF_plasma_mag(1:L_half); % 等离子体 (汉宁窗)
 
 % -------------------------------------------------------------------------
-% 2. 基础波形绘图 (Fig 1-5)
+% 2. Figure 1: 发射 vs 空气接收 (合并时域与频域)
 % -------------------------------------------------------------------------
 t_display = min(5e-6, T_m); idx_display = round(t_display/t_s);
 f_range = [f_start-0.5e9, f_end+0.5e9]; f_indices = find(f >= f_range(1) & f <= f_range(2));
 
-figure(1); plot(t(1:idx_display)*1e6, s_tx(1:idx_display), 'b', t(1:idx_display)*1e6, s_rx_air(1:idx_display), 'r--');
-xlabel('时间 (μs)'); ylabel('幅值'); title('Figure 1: 发射信号 vs 空气接收信号 (时域)'); legend('Tx', 'Rx Air'); grid on;
+figure(1);
+set(gcf, 'Position', [100, 100, 1200, 500]);
 
-figure(2); S_TX_mag = abs(fft(s_tx)); S_RX_air_mag_orig = abs(fft(s_rx_air));
+% Left: Time Domain
+subplot(1, 2, 1);
+plot(t(1:idx_display)*1e6, s_tx(1:idx_display), 'b', t(1:idx_display)*1e6, s_rx_air(1:idx_display), 'r--');
+xlabel('时间 (μs)'); ylabel('幅值'); title('发射信号 vs 空气接收 (时域)'); legend('Tx', 'Rx Air'); grid on;
+
+% Right: Frequency Domain
+subplot(1, 2, 2);
+S_TX_mag = abs(fft(s_tx)); S_RX_air_mag_orig = abs(fft(s_rx_air));
 if ~isempty(f_indices), plot(f(f_indices)/1e9, S_TX_mag(f_indices), 'b', f(f_indices)/1e9, S_RX_air_mag_orig(f_indices), 'r--'); end
-xlabel('频率 (GHz)'); title('Figure 2: 发射信号 vs 空气接收信号 (频域)'); grid on;
+xlabel('频率 (GHz)'); title('发射信号 vs 空气接收 (频域)'); grid on;
 
-figure(3); plot(t(1:idx_display)*1e6, s_tx(1:idx_display), 'b', t(1:idx_display)*1e6, real(s_rx_plasma(1:idx_display)), 'r--');
-xlabel('时间 (μs)'); title('Figure 3: 发射信号 vs 等离子体接收信号 (时域)'); grid on;
+% -------------------------------------------------------------------------
+% 3. Figure 2: 发射 vs 等离子体接收 (合并时域与频域)
+% -------------------------------------------------------------------------
+figure(2);
+set(gcf, 'Position', [150, 150, 1200, 500]);
 
-figure(4); S_RX_plasma_mag_orig = abs(S_RX_plasma_fft);
+% Left: Time Domain
+subplot(1, 2, 1);
+plot(t(1:idx_display)*1e6, s_tx(1:idx_display), 'b', t(1:idx_display)*1e6, real(s_rx_plasma(1:idx_display)), 'r--');
+xlabel('时间 (μs)'); title('发射信号 vs 等离子体接收 (时域)'); grid on;
+
+% Right: Frequency Domain
+subplot(1, 2, 2);
+S_RX_plasma_mag_orig = abs(S_RX_plasma_fft);
 if ~isempty(f_indices), plot(f(f_indices)/1e9, S_TX_mag(f_indices), 'b', f(f_indices)/1e9, S_RX_plasma_mag_orig(f_indices), 'r--'); end
-xlabel('频率 (GHz)'); title('Figure 4: 发射信号 vs 等离子体接收信号 (频域)'); grid on;
-
-figure(5); plot(t(1:round(20e-6/t_s))*1e6, s_if_air(1:round(20e-6/t_s)), 'b');
-xlabel('时间 (μs)'); title('Figure 5: 空气介质差频信号 (时域)'); grid on;
+xlabel('频率 (GHz)'); title('发射信号 vs 等离子体接收 (频域)'); grid on;
 
 % -------------------------------------------------------------------------
-% 3. Figure 6 & 8: 绘制原始离散频谱 (不添加任何校正标注)
+% 4. Figure 3: 差频信号分析 (合并 2x2)
 % -------------------------------------------------------------------------
+figure(3);
+set(gcf, 'Position', [200, 200, 1200, 800]);
+
 % 寻找显示范围
 [~, k_peak_air_rough] = max(mag_air_plot);
 [~, k_peak_pla_rough] = max(mag_plasma_plot);
@@ -176,33 +184,37 @@ f_peak_air_rough = f_axis_plot(k_peak_air_rough);
 f_peak_pla_rough = f_axis_plot(k_peak_pla_rough);
 zoom_span_vis = 0.8e6; 
 
-% --- Figure 6: 空气 (保持原样：很尖锐，因为没加汉宁窗) ---
-figure(6); clf;
+% Top-Left: Air Time
+subplot(2, 2, 1);
+plot(t(1:round(20e-6/t_s))*1e6, s_if_air(1:round(20e-6/t_s)), 'b');
+xlabel('时间 (μs)'); title('空气差频 (时域)'); grid on;
+
+% Top-Right: Plasma Time
+subplot(2, 2, 2);
+plot(t(1:round(20e-6/t_s))*1e6, s_if_plasma(1:round(20e-6/t_s)), 'r');
+xlabel('时间 (μs)'); title('等离子体差频 (时域)'); grid on;
+
+% Bottom-Left: Air Freq (保持原样：很尖锐)
+subplot(2, 2, 3);
 stem(f_axis_plot/1e3, mag_air_plot, 'b', 'MarkerSize', 4, 'LineWidth', 1.0, 'BaseValue', 0); 
 hold on;
-xline(f_beat_air_theory/1e3, 'k--', 'LineWidth', 1.5, 'DisplayName', '理论真值'); % 保留您原来的理论线
+xline(f_beat_air_theory/1e3, 'k--', 'LineWidth', 1.5, 'DisplayName', '理论真值');
 xlim([(f_peak_air_rough - zoom_span_vis)/1e3, (f_peak_air_rough + zoom_span_vis)/1e3]);
 xlabel('频率 (kHz)'); ylabel('幅值'); 
-title('Figure 6: 空气介质差频信号频谱 (离散采样)'); 
+title('空气差频 (离散频谱)'); 
 grid on; legend('离散频谱数据', '理论真值');
 
-% Fig 7: 差频时域 (Plasma)
-figure(7); plot(t(1:round(20e-6/t_s))*1e6, s_if_plasma(1:round(20e-6/t_s)), 'r');
-xlabel('时间 (μs)'); title('Figure 7: 等离子体介质差频信号 (时域)'); grid on;
-
-% --- Figure 8: 等离子体 (保持原样：稍微胖一点，因为第5节加了汉宁窗) ---
-figure(8); clf;
-stem(f_axis_plot/1e3, mag_plasma_plot, 'b', 'MarkerSize', 4, 'LineWidth', 1.0, 'BaseValue', 0); % 保持蓝色
+% Bottom-Right: Plasma Freq (保持原样：稍微胖一点)
+subplot(2, 2, 4);
+stem(f_axis_plot/1e3, mag_plasma_plot, 'b', 'MarkerSize', 4, 'LineWidth', 1.0, 'BaseValue', 0); 
 xlim([(f_peak_pla_rough - zoom_span_vis)/1e3, (f_peak_pla_rough + zoom_span_vis)/1e3]);
 xlabel('频率 (kHz)'); ylabel('幅值'); 
-title('Figure 8: 等离子体介质差频信号频谱 (离散采样)'); 
+title('等离子体差频 (离散频谱)'); 
 grid on; legend('离散频谱数据');
 
 
 %% 7. 【传统方法诊断总结】Figure 10: 高精度校正分析
 % 目的：为了保证计算精度，在此处对空气信号补加汉宁窗，确保与等离子体信号处理一致
-fprintf('---------------------------------------------\n');
-fprintf('生成 Figure 10: 执行高精度频谱校正...\n');
 
 % =========================================================================
 % 7.1 数据再处理 (核心修正：统一加窗以恢复精度)
@@ -259,6 +271,8 @@ n_e_trad = const_term * (f_center_radar^2 / d) * delta_tau;
 err_trad = abs(n_e_trad - n_e)/n_e * 100;
 
 % 命令行打印
+fprintf('截止频率：%.0fGHz\n', f_c/1e9);
+fprintf('电子密度 n_e: %.2e m^-3\n', n_e);
 fprintf('校正后空气差频: %.4f MHz\n', f_corr_air/1e6);
 fprintf('校正后等离子体差频: %.4f MHz\n', f_corr_pla/1e6);
 fprintf('频率差: %.4f MHz\n', delta_f/1e6);
