@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CSTAuxiliaryGeometry version="20170928">
+  <Objects>
+    <Object name="Components\PCB:Substrate" id="1"/>
+    <Object name="Components\Waveguide:WG_In" id="2"/>
+    <Object name="Components\Waveguide:WG_Out" id="3"/>
+    <Object name="Components\SRR:SRR_Outer" id="4"/>
+  </Objects>
+  <Materials/>
+  <Groups>
+    <Group name="Group [boundary]Low^X" type="Connectivity" ID="1"/>
+    <Group name="Isolators" type="Isolator" ID="1">
+      <Item name="Components\PCB:Substrate" type="solid" id="1"/>
+      <Item name="Components\Waveguide:WG_In" type="solid" id="2"/>
+      <Item name="Components\Waveguide:WG_Out" type="solid" id="3"/>
+    </Group>
+    <Group name="Unconsidered" type="Isolator" ID="1">
+      <Item name="Components\SRR:SRR_Outer" type="solid" id="4"/>
+    </Group>
+  </Groups>
+</CSTAuxiliaryGeometry>

@@ -2,7 +2,7 @@
 % plot_fig_4_12_robustness.m
 % 论文图4-12：碰撞频率失配对电子密度反演精度的影响
 % 生成日期：2026-01-26
-% 对应章节：4.4.4 降维反演的鲁棒性测试
+% 对应章节：4.4.5 降维反演的鲁棒性测试
 %
 % 图表核心表达：
 % - 即使ν_e预设偏离真值300%，n_e反演误差仍<3%
@@ -155,7 +155,7 @@ if USE_FULL_SIMULATION
         
         if t_center > 0.95*T_m || t_center < 0.05*T_m, continue; end
         
-        % ESPRIT处理
+        % --- ESPRIT处理：与论文主流程保持一致（FB平滑 + MDL定阶 + TLS-ESPRIT） ---
         M_sub = win_len - L_sub + 1;
         X_hankel = zeros(L_sub, M_sub);
         for k = 1:M_sub
@@ -166,12 +166,33 @@ if USE_FULL_SIMULATION
         J_mat = fliplr(eye(L_sub));
         R_x = (R_f + J_mat * conj(R_f) * J_mat) / 2;
         
+        % 特征值分解
         [eig_vecs, eig_vals_mat] = eig(R_x);
         lambda = diag(eig_vals_mat);
-        [~, sort_idx] = sort(lambda, 'descend');
+        [lambda, sort_idx] = sort(lambda, 'descend');
         eig_vecs = eig_vecs(:, sort_idx);
         
-        num_sources = 1;
+        % --- MDL 准则定阶 ---
+        p = length(lambda);
+        N_snaps = M_sub;
+        mdl_cost = zeros(p, 1);
+        for k_mdl = 0:p-1
+            noise_evals = lambda(k_mdl+1:end);
+            noise_evals(noise_evals < 1e-15) = 1e-15;
+            g_mean = prod(noise_evals)^(1/length(noise_evals));
+            a_mean = mean(noise_evals);
+            term1 = -(p-k_mdl) * N_snaps * log(g_mean / a_mean);
+            term2 = 0.5 * k_mdl * (2*p - k_mdl) * log(N_snaps);
+            mdl_cost(k_mdl+1) = term1 + term2;
+        end
+        [~, min_idx] = min(mdl_cost);
+        k_est = min_idx - 1;
+        
+        % 物理约束（防止过拟合/异常定阶）
+        num_sources = max(1, k_est);
+        num_sources = min(num_sources, 3);
+        
+        % --- TLS-ESPRIT ---
         Us = eig_vecs(:, 1:num_sources);
         psi = (Us(1:end-1, :)' * Us(1:end-1, :)) \ (Us(1:end-1, :)' * Us(2:end, :));
         z_roots = eig(psi);
@@ -193,6 +214,12 @@ if USE_FULL_SIMULATION
     
     fprintf('  提取 %d 个特征点\n\n', length(feature_f_probe));
     
+    if isempty(feature_f_probe)
+        error(['ESPRIT未提取到任何有效特征点。' newline ...
+               '这通常意味着差频信号提取/降采样/ESPRIT参数或频率筛选范围存在问题。' newline ...
+               '建议检查：fc_lp、decimation_factor、win_time、以及 valid_mask 的频率范围。']);
+    end
+    
     % 数据准备
     tau_relative_meas = feature_tau_absolute - tau_air;
     fit_mask = (feature_f_probe >= f_start + 0.05*B) & ...
@@ -205,6 +232,10 @@ if USE_FULL_SIMULATION
     Weights = (W_raw / max(W_raw)).^2;
     
     sigma_meas = 0.1e-9;
+    
+    if isempty(X_fit)
+        error('有效拟合数据点为空，请检查 ESPRIT 提取结果或 fit_mask 取值范围！');
+    end
     
     %% 3.3 对每个ν_e预设值进行单参数MCMC反演
     
@@ -433,8 +464,13 @@ for i = 1:length(nu_preset_values)
 end
 
 fprintf('\n关键结论:\n');
-fprintf('  - 在|δ_ν|≤100%%范围内，n_e误差始终<1.5%%\n');
-fprintf('  - 即使δ_ν=+200%%，n_e误差仅为%.1f%%，仍满足5%%工程精度\n', ne_errors(end));
+idx_100 = abs(mismatch_ratios) <= 100;
+fprintf('  - 在|δ_ν|≤100%%范围内，n_e误差最大为%.2f%%\n', max(ne_errors(idx_100)));
+if ne_errors(end) <= 5
+    fprintf('  - 即使δ_ν=+200%%，n_e误差为%.2f%%，仍满足5%%工程精度\n', ne_errors(end));
+else
+    fprintf('  - δ_ν=+200%%时，n_e误差为%.2f%%，不满足5%%工程精度（请检查特征提取/似然/数据筛选）\n', ne_errors(end));
+end
 fprintf('  - FFT方法误差40-60%%，波动大，无法可靠使用\n');
 
 fprintf('\n================================================\n');

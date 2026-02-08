@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaGeometryFile version="20200202" creator="MatrixCalc">
+  <Components>
+    <Shape name="Components\SRR:SRR_Outer" id="1" visible="1" material="PEC" line_material="">
+      <MeshGroup0D list=""/>
+      <MeshGroup1D list=""/>
+      <MeshGroup2D>
+        <Pos list="1 2 3 4 5 6 7 8 9 10"/>
+        <Neg list=""/>
+        <DS list=""/>
+      </MeshGroup2D>
+      <MeshGroup3D list=""/>
+    </Shape>
+    <Shape name="Components\Waveguide:Air_Cavity" id="2" visible="1" material="Vacuum" line_material="">
+      <MeshGroup0D list=""/>
+      <MeshGroup1D list=""/>
+      <MeshGroup2D>
+        <Pos list="11 12 13 14 15 16"/>
+        <Neg list=""/>
+        <DS list=""/>
+      </MeshGroup2D>
+      <MeshGroup3D list=""/>
+    </Shape>
+  </Components>
+  <Materials>
+    <Material name="air_0" priority="1">
+      <Drawstyle color="0.600000024 0.600000024 0.600000024" transparency="0" linestrength="1"/>
+    </Material>
+    <Material name="PEC" priority="5">
+      <Drawstyle color="0.800000012 0.800000012 0.800000012" transparency="0" linestrength="1"/>
+    </Material>
+    <Material name="Vacuum" priority="4">
+      <Drawstyle color="0.5 0.800000012 1" transparency="0" linestrength="1"/>
+    </Material>
+    <Material name="$NFSMaterial$" priority="2">
+      <Drawstyle color="0 1 1" transparency="0" linestrength="1"/>
+    </Material>
+  </Materials>
+  <Groups/>
+  <SimulationDomain min="-3.55599999 -1.778 0" max="3.55599999 1.778 20"/>
+  <MeshType type="HEX"/>
+  <HexMesh>
+    <Dimensions nx="25" ny="11" nz="51"/>
+    <MeshPlanesX values="-3.556 -3.0872316314703863 -2.6184632629407729 -2.1496948944111587 -1.7272329661379291 -1.4848219774252853 -1.2424109887126413 -1 -0.84999999999999998 -0.69999999999999996 -0.46666666666666656 -0.23333333333333339 -2.7489584682645803e-16 0.23333333333333292 0.46666666666666706 0.69999999999999996 0.84999999999999998 1 1.2424109887126433 1.484821977425286 1.7272329661379286 2.1496948944111574 2.6184632629407711 3.0872316314703849 3.556"/>
+    <MeshPlanesY values="-1.778 -1.7430000000000001 -1.4997680258749624 -1.2565360517499262 -1.0133040776248903 -0.58243240987323019 -0.11034592789860026 0.36174055407602962 0.83382703605066 1.3059135180252894 1.778"/>
+    <MeshPlanesZ values="0 0.48781064461155799 0.97562128922311597 1.4634319338346737 1.9512425784462317 2.4390532230577935 2.9268638676693555 3.4146745122809175 3.9024851568924785 4.3902958015040401 4.8781064461156021 5.3659170907271649 5.8537277353387269 6.341538379950288 6.82934902456185 7.3171596691734111 7.8049703137849731 8.2593062960244286 8.5062041973496267 8.7531020986748249 9.0000000000000018 9.1500000000000004 9.3000000000000007 9.5333333333333332 9.7666666666666675 10 10.233333333333331 10.466666666666665 10.699999999999999 10.85 11 11.246897901325198 11.493795802650398 11.740693703975598 12.195029686215085 12.682840330826638 13.170650975438191 13.658461620049744 14.146272264661297 14.634082909272859 15.121893553884423 15.609704198495985 16.097514843107543 16.585325487719107 17.073136132330671 17.560946776942231 18.048757421553795 18.536568066165337 19.02437871077689 19.512189355388447 20"/>
+    <SnappingPlanesX values="0 7 9 15 17 24"/>
+    <SnappingPlanesY values="0 1 10"/>
+    <SnappingPlanesZ values="0 20 22 28 30 50"/>
+  </HexMesh>
+  <UnitCell/>
+  <GeometryFile filename="3d.slm" type="slim" scale_factor_to_meter="0.001" subdomain_id=""/>
+</MetaGeometryFile>

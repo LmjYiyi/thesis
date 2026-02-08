@@ -1,0 +1,19 @@
+===================================================================================================
+== CST Matrix Calculation Priority Log
+===================================================================================================
+ 
+Priorities are sorted in ascending order beginning with the lowest priority
+ 
+Priority-group: 1, shape 7: </cst/Boundaries/> Low^Z,   material: $NFSMaterial$,  user-priority: 0.000000,   material-attributes: normal.vacuum,  shape-attributes: boundary,    scheme type:FIT_TD
+Priority-group: 1, shape 10: </cst/Boundaries/> Up^Z,    material: $NFSMaterial$,  user-priority: 0.000000,   material-attributes: normal.vacuum,  shape-attributes: boundary,    scheme type:FIT_TD
+Priority-group: 2, shape 5: </cst/Boundaries/> Low^X,   material: Copper (annealed),  user-priority: 0.000000,   material-attributes: pec.rho.surface-impedance,  shape-attributes: boundary,    scheme type:FIT_TD
+Priority-group: 2, shape 6: </cst/Boundaries/> Low^Y,   material: Copper (annealed),  user-priority: 0.000000,   material-attributes: pec.rho.surface-impedance,  shape-attributes: boundary,    scheme type:FIT_TD
+Priority-group: 2, shape 8: </cst/Boundaries/> Up^X,    material: Copper (annealed),  user-priority: 0.000000,   material-attributes: pec.rho.surface-impedance,  shape-attributes: boundary,    scheme type:FIT_TD
+Priority-group: 2, shape 9: </cst/Boundaries/> Up^Y,    material: Copper (annealed),  user-priority: 0.000000,   material-attributes: pec.rho.surface-impedance,  shape-attributes: boundary,    scheme type:FIT_TD
+Priority-group: 3, shape 1: PCB:Substrate,  material: Rogers 4350B,   user-priority: 0.000000,   2D/3D-geometry: true, material-attributes: normal, shape-attributes: solid,   scheme type:FIT_TD
+Priority-group: 3, shape 3: Waveguide:WG_In,    material: Vacuum, user-priority: 0.000000,   2D/3D-geometry: true, material-attributes: normal.vacuum,  shape-attributes: solid,   scheme type:FIT_TD
+Priority-group: 3, shape 4: Waveguide:WG_Out,   material: Vacuum, user-priority: 0.000000,   2D/3D-geometry: true, material-attributes: normal.vacuum,  shape-attributes: solid,   scheme type:FIT_TD
+Priority-group: 4, shape 2: SRR:SRR_Outer,  material: Copper (annealed),  user-priority: 0.000000,   2D/3D-geometry: true, material-attributes: pec.rho.surface-impedance,  shape-attributes: solid,   scheme type:FIT_TD
+ 
+===================================================================================================
+ 
