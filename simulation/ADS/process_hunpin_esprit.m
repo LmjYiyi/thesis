@@ -58,16 +58,13 @@ fprintf('  K       = %.3e Hz/s\n', K);
 % 策略: 先粗降采样(简单抽取), 再低通滤波
 %        和频混叠到高频, LPF 会自动滤除
 
-% --- Stage 1: 粗降采样 (2 THz → 4 GHz) ---
-dec1 = 500;
-v_dec = v_raw(1:dec1:end);
-t_dec = t_raw(1:dec1:end);
-fs_dec = f_s_original / dec1;  % ~4 GHz
-% 注: 71 GHz 和频混叠到 71 mod 4 = 3 GHz → 折叠到 4-3 = 1 GHz
-%     远高于 LPF 截止频率, 会被滤除
+% --- Stage 1: 强制均匀重采样 (解决 ADS 变步长问题) ---
+fs_dec = 4e9; % 4 GHz 均匀网格
+t_dec = linspace(t_raw(1), t_raw(end), round(T_m * fs_dec)).';
+v_dec = interp1(t_raw, v_raw, t_dec, 'spline');
 
-fprintf('\n降采样 Stage1: 因子=%d, 采样率=%.1f GHz, 点数=%d\n', ...
-    dec1, fs_dec/1e9, length(v_dec));
+fprintf('\n重采样 Stage1: 均匀采样率=%.1f GHz, 点数=%d\n', ...
+    fs_dec/1e9, length(v_dec));
 
 % --- Stage 2: 低通滤波提取差频信号 ---
 fc_lp = 200e6;  % 截止频率 200 MHz (远高于预期差频, 远低于混叠和频)
@@ -102,7 +99,7 @@ title('低通滤波后差频 (IF) 信号'); grid on; axis tight;
 fprintf('\n开始滑动窗口 ESPRIT 特征提取...\n');
 
 % 窗口参数
-win_frac = 0.20;                          % 窗口占扫频周期的比例
+win_frac = 0.03;                          % 窗口占扫频周期的比例
 win_len  = max(round(win_frac * N_proc), 64);
 step_len = max(round(win_len / 8), 1);    % 步进 = 窗口/8
 L_sub    = round(win_len / 2);            % Hankel 矩阵行数
@@ -113,7 +110,7 @@ feature_tau      = [];
 feature_amplitude = [];
 
 % 信号能量阈值 (跳过无信号区域)
-rms_threshold = max(abs(s_proc)) * 0.01;
+rms_threshold = max(abs(s_proc)) * 0.005;
 
 num_windows = floor((N_proc - win_len) / step_len) + 1;
 fprintf('  窗口长度: %d 点 (%.1f ns)\n', win_len, win_len/f_s_proc*1e9);
