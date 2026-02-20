@@ -168,7 +168,7 @@ MH 接受概率：$\alpha = \min\left(1, \exp[\ln L(\theta') - \ln L(\theta^{(t)
 
 第五章 多物理模型拓展验证与数值研究 ✅已定稿
   5.1 基于CST的Lorentz超材料模型验证 ✅
-  5.2 基于Butterworth滤波器的线性系统频率响应参数反演验证 ✅
+  5.2 基于切比雪夫滤波器的线性系统频率响应参数反演验证 ✅
   5.3 实验系统设计与初步验证 ← 当前工作重点
 
 第六章 总结与展望
@@ -180,7 +180,7 @@ MH 接受概率：$\alpha = \min\left(1, \exp[\ln L(\theta') - \ln L(\theta^{(t)
 |------|------|-------------|-------------|----------|
 | 4.4 | Drude 等离子体 | $n_e$: 0.62% | $\nu_e$: 23.6% | 传统FFT误差245%, MCMC误差<1% |
 | 5.1 | Lorentz 超材料 | $f_{res}$: 0.14% | $\gamma$: 48.6% | 跨模型验证参数敏感度层级 |
-| 5.2 | Butterworth 滤波器 | $F_0$: 0.29% | $N$: 9.90% | 无空间尺度参数的纯电路系统 |
+| 5.2 | 切比雪夫滤波器 | $F_{center}$: 0.29% | $BW_{pass}$: 9.90% | 无空间尺度参数的纯电路系统 |
 
 **普适性结论：** 决定群时延曲线"形状/拓扑"的参数强可观测（CV < 2%），控制"幅度衰减/损耗"的参数弱可观测（CV > 20%）。
 
@@ -194,8 +194,8 @@ MH 接受概率：$\alpha = \min\left(1, \exp[\ln L(\theta') - \ln L(\theta^{(t)
 |------|------|------|
 | `LM_MCMC.m` | 4.4 | **核心代码**：Drude等离子体 LFMCW + ESPRIT + MCMC反演 (759行) |
 | `LM.m` | 4.4 | Drude LM确定性反演版本 |
-| `LFMCW_filter_MCMC.m` | 5.2 | Butterworth滤波器三参数MCMC反演 (810行) |
-| `LFMCW_filter_inversion_FINAL.m` | 5.2 | Butterworth滤波器LM反演版本 (603行) |
+| `LFMCW_filter_MCMC.m` | 5.2 | 切比雪夫滤波器三参数MCMC反演 (810行) |
+| `LFMCW_filter_inversion_FINAL.m` | 5.2 | 切比雪夫滤波器LM反演版本 (603行) |
 | `LM_lorentz_MCMC.m` | 5.1 | Lorentz超材料MCMC反演 |
 | `LM_lorentz.m` | 5.1 | Lorentz LM反演 |
 | `Fig4_9_FFT_vs_ESPRIT_comparison.m` | 4.4 | FFT vs ESPRIT 对比图 (629行) |
@@ -268,40 +268,34 @@ ADS 数据文件：
 ### 6.2 实验滤波器参数 (`resources/parameters.txt`)
 
 ```
-中心频率(F0): 14 GHz
-通带频率: 10 ~ 18 GHz
-通带插入损耗: ≤2.0 dB
-通带纹波: ≤1.2 dB
-通带回波损耗: ≥17 dB
-阻带抑制: ≥80 dB @ DC~7.7 GHz, ≥50 dB @ 7.7~8.8 GHz
-          ≥50 dB @ 18.5~18.8 GHz, ≥80 dB @ 18.8~25.5 GHz
+滤波器类型: 切比雪夫带通滤波器
+等效中心频率: F_center = 37 GHz
+通带带宽: BW_pass = 1 GHz
+通带纹波: Ripple = 0.5 dB
+阻带带宽: BW_stop = 4.4 GHz
+阻带衰减: A_stop = 80 dB
 阻抗: 50 Ohms
-功率: 5W Max
-连接器: SMA-Female
-尺寸: 90*20*11mm
-材料: H62 铜合金
 ```
 
-### 6.3 Butterworth 滤波器仿真模型
+### 6.3 切比雪夫滤波器仿真模型
 
-**已完成验证**（第5.2节定稿）。仿真中使用的 Butterworth 模型：
+**已完成验证**（第5.2节定稿）。仿真中使用的切比雪夫带通滤波器模型：
 
 幅度响应：
-$$|H_{BP}(f)|^2 = \frac{1}{1 + \left(\frac{f - F_0}{BW/2}\right)^{2N}}$$
+$$|H_{BP}(f)|^2 = \frac{1}{1 + \epsilon^2 C_N^2\left(\frac{f - F_{center}}{BW_{pass}/2}\right)}$$
 
-群时延（解析式）：
-$$\tau_g = \frac{2N}{\pi \cdot BW}\left[1 + \left(\frac{f-F_0}{BW/2}\right)^2\right]^{-(N+1)/2}$$
+其中 $C_N(x)$ 为 $N$ 阶切比雪夫多项式，$\epsilon$ 由通带纹波决定：
+$$\epsilon = \sqrt{10^{R_{ipple}/10} - 1}$$
+
+群时延需数值计算：
+$$\tau_g(f) = -\frac{d\phi(f)}{df}$$
 
 仿真参数：
-- 频率范围：10-18 GHz
-- 真值：$F_0 = 14$ GHz, $BW = 8$ GHz, $N = 5$
+- 频率范围：36.5-37.5 GHz
+- 真值：$F_{center} = 37$ GHz, $BW_{pass} = 1$ GHz, $BW_{stop} = 4.4$ GHz
+- 纹波：$R_{ipple} = 0.5$ dB，阻带衰减：$A_{stop} = 80$ dB
 - 参考时延：$\tau_{ref} = 2$ ns
 - 调制周期：$T_m = 100\ \mu s$
-
-MCMC 反演结果：
-- $F_0$ 误差 0.14%（CV=0.29%）
-- $BW$ 误差 1.00%（CV=4.42%）
-- $N$ 误差 3.00%（CV=9.90%）
 
 ### 6.4 ADS 仿真现状
 
@@ -329,7 +323,7 @@ MCMC 反演结果：
 Level 1: MATLAB 数值仿真（理想模型）
   ├── Drude 等离子体 (LM_MCMC.m)
   ├── Lorentz 超材料 (LM_lorentz_MCMC.m)
-  └── Butterworth 滤波器 (LFMCW_filter_MCMC.m)
+  └── 切比雪夫滤波器 (LFMCW_filter_MCMC.m)
 
 Level 2: ADS 电路仿真（真实器件模型）
   ├── LFMCW VCO + 混频器 + 滤波器链路
@@ -373,12 +367,33 @@ function [delay_relative, freq_out] = calculate_theoretical_delay(n_e, nu_e, d, 
 end
 ```
 
-### 7.2 Butterworth 群时延解析式
+### 7.2 切比雪夫滤波器群时延计算
 
 ```matlab
-function tau_g = calculate_filter_group_delay(f, F0, BW, N)
-    x = (f - F0) / (BW/2);
-    tau_g = (2*N) / (pi * BW) * (1 + x.^2).^(-(N+1)/2);
+function tau_g = calculate_chebyshev_group_delay(f, F_center, BW_pass, BW_stop, Ripple, N)
+    % 切比雪夫带通滤波器群时延（数值计算）
+    epsilon = sqrt(10^(Ripple/10) - 1);
+    x = (f - F_center) / (BW_pass/2);
+    
+    % 幅度响应
+    H_sq = 1 ./ (1 + epsilon^2 * chebyshev_poly(N, x).^2);
+    
+    % 相位（Hilbert变换）
+    phase = -imag(hilbert(log(H_sq)));
+    
+    % 群时延
+    tau_g = diff(phase) ./ diff(2*pi*f);
+end
+
+function y = chebyshev_poly(N, x)
+    % 切比雪夫多项式
+    if N == 0
+        y = ones(size(x));
+    elseif N == 1
+        y = x;
+    else
+        y = 2*x .* chebyshev_poly(N-1, x) - chebyshev_poly(N-2, x);
+    end
 end
 ```
 
@@ -482,14 +497,16 @@ end
 | 谐振频率 | $f_{res}$ | 34.5 GHz |
 | 阻尼系数 | $\gamma$ | 0.5 GHz |
 
-### 8.3 Butterworth 滤波器（第5.2章）
+### 8.3 切比雪夫滤波器（第5.2章）
 
 | 参数 | 符号 | 数值 |
 |------|------|------|
-| 中心频率 | $F_0$ | 14 GHz |
-| 带宽 | $BW$ | 8 GHz |
-| 阶数 | $N$ | 5 |
-| LFMCW频率范围 | — | 10-18 GHz |
+| 中心频率 | $F_{center}$ | 37 GHz |
+| 通带带宽 | $BW_{pass}$ | 1 GHz |
+| 通带纹波 | $R_{ipple}$ | 0.5 dB |
+| 阻带带宽 | $BW_{stop}$ | 4.4 GHz |
+| 阻带衰减 | $A_{stop}$ | 80 dB |
+| LFMCW频率范围 | — | 36.5-37.5 GHz |
 | 调制周期 | $T_m$ | 100 μs |
 | 参考时延 | $\tau_{ref}$ | 2 ns |
 
@@ -499,8 +516,8 @@ end
 |------|------|
 | LFMCW 范围 | 34.2-37.4 GHz |
 | 带宽 | 3.2 GHz |
-| 滤波器中心频率 | 14 GHz |
-| 通带 | 10-18 GHz |
+| 滤波器中心频率 | 37 GHz |
+| 通带 | 36.5-37.5 GHz |
 
 ### 8.5 物理常数
 
@@ -562,7 +579,7 @@ thesis/
 │
 ├── thesis-code/                  # MATLAB 仿真代码
 │   ├── LM_MCMC.m                # 核心：Drude MCMC反演
-│   ├── LFMCW_filter_MCMC.m      # Butterworth滤波器MCMC
+│   ├── LFMCW_filter_MCMC.m      # 切比雪夫滤波器MCMC
 │   ├── LM_lorentz_MCMC.m        # Lorentz MCMC反演
 │   ├── Fig4_9_FFT_vs_ESPRIT_comparison.m
 │   ├── nue.m / test.m / lianghua.m / initial.m
@@ -613,7 +630,7 @@ thesis/
 3. **ADS 仿真验证**：
    - 从 ADS 导出的 `s21.txt` 和 `delay.txt` 验证滤波器群延迟特性
    - 利用 `process_hunpin_esprit.m` 从混频信号提取时延特征
-   - 将提取结果与理论 Butterworth 模型对比
+   - 将提取结果与理论切比雪夫滤波器模型对比
 
 ### 11.2 ADS 仿真数据处理流程
 
