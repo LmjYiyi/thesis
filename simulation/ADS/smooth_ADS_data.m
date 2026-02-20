@@ -20,7 +20,7 @@ set(groot, 'defaultAxesFontName', font_cn);
 
 %% 1. Load Data
 % Check if file exists
-file_path = 'a.txt';
+file_path = 'fashe_dbm.txt';
 if ~isfile(file_path)
     error('File %s not found in current directory.', file_path);
 end
@@ -56,7 +56,7 @@ power_med = medfilt1(power_dBm, med_window, 'truncate');
 % This creates a "sliding window" equivalent to an RBW filter.
 % Using linear power ensures "In-band Average Power" is preserved correcty.
 
-RBW_target = 20e6; % 20 MHz (Configurable)
+RBW_target = 60e6; % 60 MHz (Configurable)
 window_len = round(RBW_target / df);
 
 % Ensure window length is odd for symmetry (helps preserve peak position)
@@ -81,7 +81,7 @@ power_smooth_dBm = 10 .* log10(power_smooth_mW);
 % Used strictly for visualization smoothness on the dBm curve.
 % Parameters: Order 2 (less aggressive), Frame Length 11 (preserves sharp features).
 sg_order = 2;
-sg_len = 11; % Milder smoothing length
+sg_len = 51; % Stronger smoothing length for ripples
 
 % Adjust sg_len if data is too short
 if sg_len > length(power_smooth_dBm)
@@ -99,7 +99,21 @@ power_final = sgolayfilt(power_smooth_dBm, sg_order, sg_len);
 [max_val_final, max_idx_final] = max(power_final);
 target_level_3dB = max_val_final - 3;
 idx_left_3 = find(power_final(1:max_idx_final) <= target_level_3dB, 1, 'last');
-idx_right_3 = find(power_final(max_idx_final:end) <= target_level_3dB, 1, 'first') + max_idx_final - 1;
+% --- 修复后的右边沿查找逻辑 ---
+% 找到峰值右侧【最后一次】大于等于 -3dB 的相对位置
+last_above_3dB_offset = find(power_final(max_idx_final:end) >= target_level_3dB, 1, 'last');
+
+% 它的下一个点就是真正的右侧跌落点
+if isempty(last_above_3dB_offset)
+    idx_right_3 = [];
+else
+    idx_right_3 = last_above_3dB_offset + max_idx_final;
+    
+    % 防止超出数组边界的安全机制
+    if idx_right_3 > length(power_final)
+        idx_right_3 = length(power_final);
+    end
+end
 
 if ~isempty(idx_left_3) && ~isempty(idx_right_3)
     % 线性插值优化精度

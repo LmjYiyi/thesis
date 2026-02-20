@@ -16,7 +16,7 @@ set(groot, 'defaultTextFontName', font_cn);
 set(groot, 'defaultAxesFontName', font_cn);
 
 %% 2. 数据导入与预处理
-filename = 'ads_data.txt'; 
+filename = 'fashe_time_v.txt'; 
 
 if ~isfile(filename)
     error('错误：找不到文件 %s，请确认文件在当前目录下。', filename);
