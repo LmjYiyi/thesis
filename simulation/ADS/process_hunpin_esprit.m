@@ -215,9 +215,28 @@ close(hWait);
 fprintf('特征提取完成: 共 %d 个有效数据点\n', length(feature_tau));
 
 %% ======================================================================
-%  6. 绘制时延散点图
+%  6. 绘制时延散点图及对比理论延迟
 % =======================================================================
 figure('Color', 'w', 'Position', [100, 100, 900, 600]);
+
+% 加载 ADS 延迟参考数据 (delay.txt)
+fprintf('加载 ADS 理论群延迟数据...\n');
+try
+    delay_data = readmatrix('delay.txt', 'FileType', 'text', 'NumHeaderLines', 1);
+    ref_freq = delay_data(:, 1) / 1e9; % 转为 GHz
+    ref_tau = delay_data(:, 2) * 1e9;  % 转为 ns
+    has_ref = true;
+catch
+    warning('未找到或无法读取 delay.txt，将跳过参考曲线的绘制。');
+    has_ref = false;
+end
+
+hold on;
+
+% 绘制 ADS 理论延迟曲线
+if has_ref
+    plot(ref_freq, ref_tau, 'r-', 'LineWidth', 2, 'DisplayName', 'ADS S参数延迟 (delay.txt)');
+end
 
 % 过滤异常点 (排除极端时延)
 if ~isempty(feature_tau)
@@ -227,17 +246,32 @@ if ~isempty(feature_tau)
 
     scatter(feature_f_probe(valid_plot) / 1e9, ...
             feature_tau(valid_plot) * 1e9, ...
-            30, feature_amplitude(valid_plot), 'filled', ...
-            'MarkerFaceAlpha', 0.7);
-    colorbar; ylabel(colorbar, '信号幅度 (RMS)');
+            40, feature_amplitude(valid_plot), 'filled', ...
+            'MarkerFaceAlpha', 0.8, 'DisplayName', 'ESPRIT 提取时延');
+    
+    cb = colorbar; ylabel(cb, '信号幅度 (RMS)');
+    
+    % 如果有参考数据，限制 Y 轴显示范围以更好对比
+    if has_ref
+        % 寻找在扫频范围内的参考延迟，根据它设定 y 轴范围
+        idx_band = ref_freq >= f_start/1e9 & ref_freq <= f_end/1e9;
+        if any(idx_band)
+            min_tau = min(ref_tau(idx_band));
+            max_tau = max(ref_tau(idx_band));
+            padding = (max_tau - min_tau) * 0.5;
+            if padding == 0, padding = 1; end
+            ylim([min_tau - padding, max_tau + padding]);
+        end
+    end
 
     grid on;
     xlabel('探测频率 (GHz)', 'FontSize', 12);
     ylabel('时延 \tau (ns)', 'FontSize', 12);
-    title({'ADS混频信号 - ESPRIT时延提取散点图', ...
+    title({'ADS混频信号 - ESPRIT提取与S参数延迟对比', ...
            sprintf('有效点数: %d / %d', sum(valid_plot), length(feature_tau))}, ...
            'FontSize', 14);
     xlim([f_start/1e9, f_end/1e9]);
+    legend('Location', 'best', 'FontSize', 11);
 else
     text(0.5, 0.5, '未提取到有效数据点，请检查参数设置', ...
         'HorizontalAlignment', 'center', 'FontSize', 14);
