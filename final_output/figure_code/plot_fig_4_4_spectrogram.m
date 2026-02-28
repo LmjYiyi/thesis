@@ -285,8 +285,7 @@ if ~exist(output_dir, 'dir')
 end
 
 fig_name_base = '图4-4_传统方法vs时频解耦';
-print(fig, '-dpng', '-r300', fullfile(output_dir, [fig_name_base, '.png']));
-print(fig, '-dsvg', fullfile(output_dir, [fig_name_base, '.svg']));
+export_thesis_figure(fig, fig_name_base, 14, 300, 'SimHei');
 
 fprintf('\n✓ 图 4-4 已保存至 final_output/figures/\n');
 fprintf('  - %s.png\n', fig_name_base);

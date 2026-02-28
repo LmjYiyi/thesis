@@ -92,7 +92,7 @@ fprintf('共标记 %d 个物理有效交点\n', cross_count);
 %% 5. 图形美化
 xlabel('探测频率 f (GHz)', 'FontSize', 12);
 ylabel('相对群时延 \tau_g (ns)', 'FontSize', 12);
-title('图3-8 多解性论证: 不同(n_e, d)参数组合的群时延曲线交点', 'FontSize', 13);
+title('多解性论证: 不同(n_e, d)参数组合的群时延曲线交点', 'FontSize', 13);
 
 xlim([34 37.5]);
 ylim([-1 9]);

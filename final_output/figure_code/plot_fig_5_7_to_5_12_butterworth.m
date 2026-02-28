@@ -75,10 +75,10 @@ grid on; box on;
 
 xlabel('频率 f (GHz)', 'FontSize', 13, 'FontName', 'SimHei', 'Interpreter', 'none');
 ylabel('群时延 τ_g (ns)', 'FontSize', 13, 'FontName', 'SimHei', 'Interpreter', 'none');
-title('图5-7 Butterworth滤波器理论群时延曲线', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
+title('Butterworth滤波器理论群时延曲线', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
 
 % 保存
-print('-dpng', '-r300', [output_dir, '图5-7_滤波器理论群时延.png']);
+export_thesis_figure(gcf, '图5-7_滤波器理论群时延', 14, 300, 'SimHei');
 fprintf('  已保存: 图5-7_滤波器理论群时延.png\n');
 
 %% 2. 图5-8: 差频信号时域与频域特征
@@ -181,9 +181,9 @@ if length(locs) >= 2
     text(f_if_axis(locs(2))/1e3, pks(2)/max(S_IF(1:idx_f))+0.08, '峰2', 'FontSize', 10, 'FontName', 'SimHei', 'Color', colors.red, 'Interpreter', 'none');
 end
 
-sgtitle('图5-8 Butterworth滤波器差频信号特征', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
+sgtitle('Butterworth滤波器差频信号特征', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
 
-print('-dpng', '-r300', [output_dir, '图5-8_滤波器差频信号.png']);
+export_thesis_figure(gcf, '图5-8_滤波器差频信号', 14, 300, 'SimHei');
 fprintf('  已保存: 图5-8_滤波器差频信号.png\n');
 
 %% 3. 图5-9: ESPRIT特征提取结果
@@ -220,7 +220,7 @@ grid on; box on;
 
 xlabel('探测频率 f (GHz)', 'FontSize', 13, 'FontName', 'SimHei', 'Interpreter', 'none');
 ylabel('群时延 τ_g (ns)', 'FontSize', 13, 'FontName', 'SimHei', 'Interpreter', 'none');
-title('图5-9 滤波器ESPRIT特征提取结果', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
+title('滤波器ESPRIT特征提取结果', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
 
 lgd = legend({'ESPRIT提取点', '理论曲线'}, 'Location', 'northeast');
 set(lgd, 'FontName', 'SimHei', 'FontSize', 11, 'Interpreter', 'none');
@@ -230,7 +230,7 @@ rmse = sqrt(mean((tau_esprit - tau_esprit_theory).^2));
 text(11, 0.3, sprintf('RMSE ≈ %.2f ns', rmse*1e9), 'FontSize', 11, 'FontName', 'SimHei', ...
     'BackgroundColor', 'w', 'EdgeColor', 'k', 'Interpreter', 'none');
 
-print('-dpng', '-r300', [output_dir, '图5-9_滤波器ESPRIT特征.png']);
+export_thesis_figure(gcf, '图5-9_滤波器ESPRIT特征', 14, 300, 'SimHei');
 fprintf('  已保存: 图5-9_滤波器ESPRIT特征.png\n');
 
 %% 4. 图5-10: MCMC反演结果（迹线图+后验直方图）
@@ -350,9 +350,9 @@ xlabel('N (阶数)', 'FontName', 'SimHei', 'Interpreter', 'none');
 ylabel('概率密度', 'FontName', 'SimHei', 'Interpreter', 'none');
 title('(f) N 后验分布', 'FontName', 'SimHei', 'FontWeight', 'bold', 'Interpreter', 'none');
 
-sgtitle('图5-10 Butterworth滤波器MCMC反演结果', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
+sgtitle('Butterworth滤波器MCMC反演结果', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
 
-print('-dpng', '-r300', [output_dir, '图5-10_滤波器MCMC结果.png']);
+export_thesis_figure(gcf, '图5-10_滤波器MCMC结果', 14, 300, 'SimHei');
 fprintf('  已保存: 图5-10_滤波器MCMC结果.png\n');
 
 %% 5. 图5-11: Corner Plot
@@ -430,9 +430,9 @@ text(0.5, 0.5, sprintf('$\\rho(\\mathrm{BW}, N)=%.2f$', rho_BW_N), ...
     'HorizontalAlignment', 'center', 'FontSize', 14, 'Interpreter', 'latex', 'Color', colors.red);
 axis off;
 
-sgtitle('图5-11 Butterworth参数联合后验分布Corner Plot', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
+sgtitle('Butterworth参数联合后验分布Corner Plot', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
 
-print('-dpng', '-r300', [output_dir, '图5-11_滤波器CornerPlot.png']);
+export_thesis_figure(gcf, '图5-11_滤波器CornerPlot', 14, 300, 'SimHei');
 fprintf('  已保存: 图5-11_滤波器CornerPlot.png\n');
 
 %% 6. 图5-12: MCMC拟合验证
@@ -472,7 +472,7 @@ grid on; box on;
 
 xlabel('频率 f (GHz)', 'FontSize', 13, 'FontName', 'SimHei', 'Interpreter', 'none');
 ylabel('群时延 τ_g (ns)', 'FontSize', 13, 'FontName', 'SimHei', 'Interpreter', 'none');
-title('图5-12 MCMC拟合验证', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
+title('MCMC拟合验证', 'FontSize', 14, 'FontWeight', 'bold', 'FontName', 'SimHei', 'Interpreter', 'none');
 
 lgd = legend([h1, h2], {'后验均值曲线', '真值曲线'}, 'Location', 'northeast');
 set(lgd, 'FontName', 'SimHei', 'FontSize', 11, 'Interpreter', 'none');
@@ -486,7 +486,7 @@ rmse_fit = sqrt(mean((tau_esprit - tau_esprit_fit).^2));
 text(11, 0.3, sprintf('拟合RMSE ≈ %.2f ns', rmse_fit*1e9), 'FontSize', 11, 'FontName', 'SimHei', ...
     'BackgroundColor', 'w', 'EdgeColor', 'k', 'Interpreter', 'none');
 
-print('-dpng', '-r300', [output_dir, '图5-12_滤波器拟合验证.png']);
+export_thesis_figure(gcf, '图5-12_滤波器拟合验证', 14, 300, 'SimHei');
 fprintf('  已保存: 图5-12_滤波器拟合验证.png\n');
 
 %% 完成

@@ -12,7 +12,7 @@ cst_file = '../../simulation/cst_data/guding_wp.txt';
 [f_data, tau_data, labels] = read_cst_multicolumn(cst_file);
 
 %% 2. 绘图
-figure('Name', '图3-5: 碰撞频率敏感性(CST)', 'Color', 'w', 'Position', [100 100 800 550]);
+figure('Name', '碰撞频率敏感性(CST)', 'Color', 'w', 'Position', [100 100 800 550]);
 hold on; grid on;
 
 % 定义颜色和线型
@@ -55,7 +55,7 @@ end
 
 xlabel('探测频率 f (GHz)', 'FontSize', 12);
 ylabel('群时延 \tau_g (ns)', 'FontSize', 12);
-title('图3-5 固定等离子体频率条件下不同碰撞频率的群时延曲线 (CST全波仿真)', 'FontSize', 13);
+title('固定等离子体频率条件下不同碰撞频率的群时延曲线 (CST全波仿真)', 'FontSize', 13);
 
 xlim([20 40]);
 ylim([0 12]);

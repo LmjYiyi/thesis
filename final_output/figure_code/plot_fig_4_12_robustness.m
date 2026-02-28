@@ -322,7 +322,7 @@ colors.gray = [0.5, 0.5, 0.5];
 colors.green = [0.3, 0.7, 0.3];
 colors.yellow = [1, 0.9, 0.7];
 
-figure('Name', '图4-12: 鲁棒性测试', 'Color', 'w', 'Position', [100 100 1000 550]);
+figure('Name', '鲁棒性测试', 'Color', 'w', 'Position', [100 100 1000 550]);
 
 %% 主图：误差曲线对比
 
@@ -374,7 +374,7 @@ xlim([-80, 220]);
 legend({'本文ESPRIT-MCMC方法', '5%工程精度边界', '3%参考线', '传统FFT方法'}, ...
     'Location', 'north', 'FontName', 'SimHei', 'FontSize', 10, 'NumColumns', 2);
 
-title('图4-12 碰撞频率失配对电子密度反演精度的影响', ...
+title('碰撞频率失配对电子密度反演精度的影响', ...
     'FontName', 'SimHei', 'FontSize', 14, 'FontWeight', 'bold');
 
 grid on;
@@ -415,14 +415,13 @@ if ~exist(output_dir, 'dir')
     mkdir(output_dir);
 end
 
-print('-dpng', '-r300', fullfile(output_dir, '图4-12_鲁棒性测试.png'));
-print('-dsvg', fullfile(output_dir, '图4-12_鲁棒性测试.svg'));
+export_thesis_figure(gcf, '图4-12_鲁棒性测试', 14, 300, 'SimHei');
 
 fprintf('\n✓ 图4-12已保存至 final_output/figures/\n');
 
 %% 7. 附加图：95% CI覆盖率
 
-figure('Name', '图4-12b: CI覆盖率', 'Color', 'w', 'Position', [150 150 700 450]);
+figure('Name', 'CI覆盖率', 'Color', 'w', 'Position', [150 150 700 450]);
 
 set(gca, 'FontName', 'Times New Roman', 'FontSize', 11, 'LineWidth', 1.2, 'Box', 'on');
 hold on;
@@ -446,8 +445,7 @@ for i = 1:length(mismatch_ratios)
         'HorizontalAlignment', 'center', 'FontSize', 10, 'FontName', 'SimHei');
 end
 
-print('-dpng', '-r300', fullfile(output_dir, '图4-12b_CI覆盖率.png'));
-print('-dsvg', fullfile(output_dir, '图4-12b_CI覆盖率.svg'));
+export_thesis_figure(gcf, '图4-12b_CI覆盖率', 14, 300, 'SimHei');
 
 fprintf('✓ 图4-12b已保存\n');
 

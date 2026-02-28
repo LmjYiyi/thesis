@@ -27,7 +27,7 @@ fp_base = 28.98e9; wp_base = 2 * pi * fp_base;
 ne_base = (wp_base^2 * eps0 * me) / e^2; 
 
 %% 3. 创建左右子图
-figure('Name', '图3-3: MATLAB理论计算', 'Color', 'w', 'Position', [50, 100, 1400, 500]);
+figure('Name', 'MATLAB理论计算', 'Color', 'w', 'Position', [50, 100, 1400, 500]);
 
 %% =============================================================
 %% 子图(a): 电子密度敏感性分析
@@ -126,7 +126,7 @@ legend(h_lines, legend_str_nu, 'Location', 'NorthEast', 'FontSize', 10);
 set(gca, 'FontSize', 10);
 
 % 总标题
-sgtitle('图3-3 Drude模型理论群时延曲线 (MATLAB计算)', 'FontSize', 13, 'FontWeight', 'bold');
+sgtitle('Drude模型理论群时延曲线 (MATLAB计算)', 'FontSize', 13, 'FontWeight', 'bold');
 
 %% =============================================================
 %% 辅助函数: Drude模型响应计算

@@ -353,8 +353,7 @@ if ~exist(output_dir, 'dir')
     mkdir(output_dir);
 end
 
-print('-dpng', '-r300', fullfile(output_dir, '图4-6_特征轨迹重构对比.png'));
-print('-dsvg', fullfile(output_dir, '图4-6_特征轨迹重构对比.svg'));
+export_thesis_figure(gcf, '图4-6_特征轨迹重构对比', 14, 300, 'SimHei');
 
 fprintf('\n图 4-6 已保存至 final_output/figures/\n');
 fprintf('  - 图4-6_特征轨迹重构对比.png\n');

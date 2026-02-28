@@ -421,8 +421,7 @@ if ~exist(save_dir, 'dir')
     mkdir(save_dir);
 end
 
-print('-dpng', '-r300', fullfile(save_dir, '图4-7_MCMC迹线图.png'));
-print('-dsvg', fullfile(save_dir, '图4-7_MCMC迹线图.svg'));
+export_thesis_figure(gcf, '图4-7_MCMC迹线图', 14, 300, 'SimHei');
 
 fprintf('\n===================================================\n');
 fprintf('图 4-7 已保存至 final_output/figures/\n');

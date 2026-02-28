@@ -8,7 +8,7 @@
 clc; clear; close all;
 
 %% ======================== 图3-6: 低电子密度 ========================
-figure('Name', '图3-6: 低电子密度CST仿真', 'Color', 'w', 'Position', [50 100 750 500]);
+figure('Name', '低电子密度CST仿真', 'Color', 'w', 'Position', [50 100 750 500]);
 
 % 读取数据
 cst_file = '../../simulation/cst_data/low_density.txt';
@@ -47,7 +47,7 @@ end
 
 xlabel('探测频率 f (GHz)', 'FontSize', 12);
 ylabel('群时延 \tau_g (ns)', 'FontSize', 12);
-title('图3-6 低电子密度区间CST仿真群时延曲线', 'FontSize', 14);
+title('低电子密度区间CST仿真群时延曲线', 'FontSize', 14);
 
 xlim([26 40]);
 ylim([4 8]);
@@ -56,7 +56,7 @@ legend(h_plots, legend_str, 'Location', 'NorthEast', 'FontSize', 10);
 set(gca, 'FontSize', 11);
 
 %% ======================== 图3-7: 高电子密度 ========================
-figure('Name', '图3-7: 高电子密度CST仿真', 'Color', 'w', 'Position', [850 100 750 500]);
+figure('Name', '高电子密度CST仿真', 'Color', 'w', 'Position', [850 100 750 500]);
 
 % 读取数据
 cst_file = '../../simulation/cst_data/high_density.txt';
@@ -94,7 +94,7 @@ end
 
 xlabel('探测频率 f (GHz)', 'FontSize', 12);
 ylabel('群时延 \tau_g (ns)', 'FontSize', 12);
-title('图3-7 高电子密度区间CST仿真群时延曲线', 'FontSize', 14);
+title('高电子密度区间CST仿真群时延曲线', 'FontSize', 14);
 
 xlim([26 40]);
 ylim([-5 12]);

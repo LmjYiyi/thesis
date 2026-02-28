@@ -314,7 +314,7 @@ colors.orange = [0.8, 0.4, 0.2];
 colors.red = [0.85, 0.25, 0.1];
 colors.black = [0, 0, 0];
 
-figure('Name', '图4-10: MCMC迹线图与后验分布', 'Color', 'w', 'Position', [100 100 1100 750]);
+figure('Name', 'MCMC迹线图与后验分布', 'Color', 'w', 'Position', [100 100 1100 750]);
 
 %% --- (a) n_e 迹线图 ---
 subplot(2,2,1);
@@ -390,7 +390,7 @@ grid on;
 text((nu_min+nu_max)/2/1e9, max(ylim)*0.85, '平坦后验', 'FontName', 'SimHei', 'FontSize', 10, ...
     'HorizontalAlignment', 'center', 'Color', [0.6 0.3 0], 'FontWeight', 'bold');
 
-sgtitle(sprintf('图4-10 MCMC迹线图与后验边缘分布 (SNR=%d dB)', SNR_dB), ...
+sgtitle(sprintf('MCMC迹线图与后验边缘分布 (SNR=%d dB)', SNR_dB), ...
     'FontName', 'SimHei', 'FontSize', 14, 'FontWeight', 'bold');
 
 %% 保存图4-10
@@ -399,13 +399,12 @@ if ~exist(output_dir, 'dir')
     mkdir(output_dir);
 end
 
-print('-dpng', '-r300', fullfile(output_dir, '图4-10_MCMC迹线图与后验分布.png'));
-print('-dsvg', fullfile(output_dir, '图4-10_MCMC迹线图与后验分布.svg'));
+export_thesis_figure(gcf, '图4-10_MCMC迹线图与后验分布', 14, 300, 'SimHei');
 fprintf('\n✓ 图4-10已保存\n');
 
 %% 7. 绘制图4-11: Corner Plot
 
-figure('Name', '图4-11: Corner Plot', 'Color', 'w', 'Position', [150 150 750 700]);
+figure('Name', 'Corner Plot', 'Color', 'w', 'Position', [150 150 750 700]);
 
 %% --- 左上: n_e边缘分布 ---
 subplot(2,2,1);
@@ -467,12 +466,11 @@ text(0.5, 0.3, '(接近零 → 参数解耦)', 'FontName', 'SimHei', 'FontSize',
     'Color', [0.4 0.4 0.4], 'HorizontalAlignment', 'center', 'Units', 'normalized');
 title('参数耦合分析', 'FontName', 'SimHei', 'FontSize', 11, 'FontWeight', 'bold');
 
-sgtitle('图4-11 参数联合后验分布Corner Plot', ...
+sgtitle('参数联合后验分布Corner Plot', ...
     'FontName', 'SimHei', 'FontSize', 14, 'FontWeight', 'bold');
 
 %% 保存图4-11
-print('-dpng', '-r300', fullfile(output_dir, '图4-11_CornerPlot.png'));
-print('-dsvg', fullfile(output_dir, '图4-11_CornerPlot.svg'));
+export_thesis_figure(gcf, '图4-11_CornerPlot', 14, 300, 'SimHei');
 fprintf('✓ 图4-11已保存\n');
 
 %% 8. 输出论文数据

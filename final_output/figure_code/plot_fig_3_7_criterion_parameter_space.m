@@ -170,7 +170,6 @@ if ~exist(output_dir, 'dir')
     mkdir(output_dir);
 end
 
-print('-dpng', '-r600', fullfile(output_dir, '图3-7_色散判据_PhD版本.png'));
-print('-dsvg', fullfile(output_dir, '图3-7_色散判据_PhD版本.svg'));
+export_thesis_figure(gcf, '图3-7_色散判据_PhD版本', 14, 300, 'SimHei');
 
 fprintf('✓ 博士论文标准插图已生成。\n');

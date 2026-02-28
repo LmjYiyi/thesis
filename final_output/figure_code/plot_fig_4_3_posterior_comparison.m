@@ -422,8 +422,7 @@ if ~exist(save_dir, 'dir')
     mkdir(save_dir);
 end
 
-print('-dpng', '-r300', fullfile(save_dir, '图4-3_后验分布对比_尖峰vs平原.png'));
-print('-dsvg', fullfile(save_dir, '图4-3_后验分布对比_尖峰vs平原.svg'));
+export_thesis_figure(gcf, '图4-3_后验分布对比_尖峰vs平原', 14, 300, 'SimHei');
 
 fprintf('\n===================================================\n');
 fprintf('图 4-3 已保存至 final_output/figures/\n');

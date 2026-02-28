@@ -198,8 +198,7 @@ output_dir = fileparts(mfilename('fullpath'));
 fig_dir = fullfile(output_dir, '..', 'figures');
 
 % 保存为多种格式
-saveas(gcf, fullfile(fig_dir, '图3-4_频谱散焦效应对比.png'));
-saveas(gcf, fullfile(fig_dir, '图3-4_频谱散焦效应对比.svg'));
+export_thesis_figure(gcf, '图3-4_频谱散焦效应对比', 14, 300, 'SimHei');
 
 fprintf('\n图像已保存至: %s\n', fig_dir);
 fprintf('完成！\n');

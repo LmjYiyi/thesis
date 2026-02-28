@@ -428,8 +428,7 @@ if ~exist(output_dir, 'dir')
 end
 
 % 保存多格式
-print('-dpng', '-r300', fullfile(output_dir, '图4-9_FFT与ESPRIT对比.png'));
-print('-dsvg', fullfile(output_dir, '图4-9_FFT与ESPRIT对比.svg'));
+export_thesis_figure(gcf, '图4-9_FFT与ESPRIT对比', 14, 300, 'SimHei');
 
 fprintf('\n✓ 图4-9 已保存至 final_output/figures/\n');
 

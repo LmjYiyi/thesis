@@ -133,11 +133,7 @@ if ~exist('../../final_output/figures', 'dir')
     mkdir('../../final_output/figures');
 end
 
-% 保存为 PNG（高分辨率）
-print('-dpng', '-r300', '../../final_output/figures/图3-7_工程判据参数空间映射.png');
-
-% 保存为 SVG（矢量图，用于排版）
-print('-dsvg', '../../final_output/figures/图3-7_工程判据参数空间映射.svg');
+export_thesis_figure(gcf, '图3-7_工程判据参数空间映射', 14, 300, 'SimHei');
 
 fprintf('图 3-7 已保存至 final_output/figures/\n');
 fprintf('验证：f_p = 20 GHz → B_max ≈ %.2f GHz\n', B_max(idx_20)/1e9);

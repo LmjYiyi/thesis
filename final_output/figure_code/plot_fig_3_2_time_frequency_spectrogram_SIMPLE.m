@@ -75,9 +75,7 @@ if ~exist(output_dir, 'dir')
 end
 
 % 保存为高分辨率格式
-print(fig, fullfile(output_dir, 'fig_3_2_instantaneous_frequency'), '-depsc2', '-r600')
-print(fig, fullfile(output_dir, 'fig_3_2_instantaneous_frequency'), '-dpng', '-r600')
-print(fig, fullfile(output_dir, 'fig_3_2_instantaneous_frequency'), '-dpdf')
+export_thesis_figure(fig, 'fig_3_2_instantaneous_frequency', 14, 300, 'SimHei');
 
 fprintf('\n图3-2 已保存至 %s\n', output_dir);
 

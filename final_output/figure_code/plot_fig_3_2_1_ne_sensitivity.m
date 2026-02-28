@@ -11,7 +11,7 @@ cst_file = '../../simulation/cst_data/guding_nue.txt';
 [f_data, tau_data, labels] = read_cst_multicolumn(cst_file);
 
 %% 2. 绘图
-figure('Name', '图3-4: 电子密度敏感性(CST)', 'Color', 'w', 'Position', [100 100 800 550]);
+figure('Name', '电子密度敏感性(CST)', 'Color', 'w', 'Position', [100 100 800 550]);
 hold on; grid on;
 
 % 定义颜色和线型 (按截止频率从小到大排列)
@@ -59,7 +59,7 @@ end
 
 xlabel('探测频率 f (GHz)', 'FontSize', 12);
 ylabel('群时延 \tau_g (ns)', 'FontSize', 12);
-title('图3-4 固定碰撞频率条件下不同电子密度的群时延曲线 (CST全波仿真)', 'FontSize', 13);
+title('固定碰撞频率条件下不同电子密度的群时延曲线 (CST全波仿真)', 'FontSize', 13);
 
 xlim([20 40]);
 ylim([-2 12]);

@@ -119,11 +119,9 @@ if ~exist(output_dir, 'dir')
 end
 
 % 图3-5：带宽-散焦非线性耦合关系（与正文图名保持一致）
-print('-dpng', '-r300', fullfile(output_dir, '图3-4_带宽散焦耦合曲线.png'));
-print('-dsvg', fullfile(output_dir, '图3-4_带宽散焦耦合曲线.svg'));
+export_thesis_figure(gcf, '图3-4_带宽散焦耦合曲线', 14, 300, 'SimHei');
 
 % 图3-6：色散系数影响
-print('-dpng', '-r300', fullfile(output_dir, '图3-6_色散系数影响频谱展宽.png'));
-print('-dsvg', fullfile(output_dir, '图3-6_色散系数影响频谱展宽.svg'));
+export_thesis_figure(gcf, '图3-6_色散系数影响频谱展宽', 14, 300, 'SimHei');
 
 fprintf('✓ 图3-5/图3-6 已保存至 final_output/figures/\\n');

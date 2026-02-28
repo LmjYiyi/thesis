@@ -455,8 +455,7 @@ if ~exist(save_dir, 'dir')
     mkdir(save_dir);
 end
 
-print('-dpng', '-r300', fullfile(save_dir, '图4-8_Corner_Plot.png'));
-print('-dsvg', fullfile(save_dir, '图4-8_Corner_Plot.svg'));
+export_thesis_figure(gcf, '图4-8_Corner_Plot', 14, 300, 'SimHei');
 
 fprintf('\n===================================================\n');
 fprintf('图 4-8 已保存至 final_output/figures/\n');

@@ -150,8 +150,7 @@ annotation('textbox', [0.15, 0.75, 0.3, 0.1], ...
 hold off;
 
 % 保存
-print('-dpng', '-r300', '../../final_output/figures/图4-2_参数空间平底谷3D曲面.png');
-print('-dsvg', '../../final_output/figures/图4-2_参数空间平底谷3D曲面.svg');
+export_thesis_figure(gcf, '图4-2_参数空间平底谷3D曲面', 14, 300, 'SimHei');
 fprintf('图 4-2 已保存。\n');
 
 %% 辅助函数

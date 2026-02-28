@@ -214,8 +214,7 @@ if ~exist('../../final_output/figures', 'dir')
     mkdir('../../final_output/figures');
 end
 
-print('-dpng', '-r300', '../../final_output/figures/图4-5_MDL准则性能验证.png');
-print('-dsvg', '../../final_output/figures/图4-5_MDL准则性能验证.svg');
+export_thesis_figure(gcf, '图4-5_MDL准则性能验证', 14, 300, 'SimHei');
 
 fprintf('图 4-5 已保存至 final_output/figures/\n');
 fprintf('  - 图4-5_MDL准则性能验证.png\n');

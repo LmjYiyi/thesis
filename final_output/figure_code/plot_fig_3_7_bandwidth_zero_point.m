@@ -80,7 +80,6 @@ if ~exist(output_dir, 'dir')
     mkdir(output_dir);
 end
 
-print('-dpng', '-r300', fullfile(output_dir, '图3-7_展宽零点示意.png'));
-print('-dsvg', fullfile(output_dir, '图3-7_展宽零点示意.svg'));
+export_thesis_figure(gcf, '图3-7_展宽零点示意', 14, 300, 'SimHei');
 
 fprintf('✓ 图3-7 已保存至 final_output/figures/\\n');
