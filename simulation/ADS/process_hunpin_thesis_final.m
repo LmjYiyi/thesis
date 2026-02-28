@@ -28,6 +28,28 @@ s_if = filtfilt(b_lp, a_lp, v_dec);
 
 s_proc = s_if(1:2:end); t_proc = t_dec(1:2:end); f_s_proc = fs_dec / 2;   
 
+% --- discrete spectrum of mixed/IF signal (same style as thesis-code/LM.m) ---
+N_if = length(s_if);
+f_if = (0:N_if-1) * (fs_dec / N_if);
+S_if = fft(s_if, N_if);
+S_if_mag = abs(S_if);
+S_if_mag = S_if_mag ./ max(S_if_mag + eps);
+
+f_if_limit = 200e6;
+idx_if = find(f_if <= f_if_limit);
+
+figure('Color', 'w', 'Position', [120, 120, 900, 420]);
+stem(f_if(idx_if)/1e6, S_if_mag(idx_if), 'b', 'MarkerSize', 2);
+grid on;
+xlabel('频率 (MHz)', 'FontSize', 12, 'FontWeight', 'bold');
+ylabel('归一化幅值 (无量纲)', 'FontSize', 12, 'FontWeight', 'bold');
+title('混频信号离散频谱图 (ADS: hunpin\_time\_v)', 'FontSize', 13);
+set(gca, 'FontName', 'SimHei', 'FontSize', 11);
+xlim([0, f_if_limit/1e6]); % X-axis without blank margin
+
+% Auto-export with unified thesis style
+export_thesis_figure(gcf, 'mix_spectrum_ads_hunpin', 14, 300);
+
 %% 3. ESPRIT 提取
 win_len = max(round(0.03 * length(s_proc)), 64);
 step_len = max(round(win_len / 8), 1);    
@@ -155,4 +177,57 @@ if ~isempty(f_valid)
     fprintf('======================================================\n\n');
 else
     disp('警告: 未找到足够有效特征点进行物理参数评估。');
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 本地函数：统一论文插图风格并自动导出
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function export_thesis_figure(fig_handle, out_name, width_cm, dpi)
+if nargin < 1 || isempty(fig_handle), fig_handle = gcf; end
+if nargin < 2 || isempty(out_name), out_name = 'figure_export'; end
+if nargin < 3 || isempty(width_cm), width_cm = 14; end
+if nargin < 4 || isempty(dpi), dpi = 300; end
+
+height_cm = width_cm * 0.618;
+out_dir = fullfile(pwd, 'figures_export');
+if ~exist(out_dir, 'dir')
+    mkdir(out_dir);
+end
+
+set(fig_handle, ...
+    'Color', 'w', ...
+    'Units', 'centimeters', ...
+    'Position', [2, 2, width_cm, height_cm], ...
+    'PaperUnits', 'centimeters', ...
+    'PaperPosition', [0, 0, width_cm, height_cm], ...
+    'PaperSize', [width_cm, height_cm]);
+
+ax_all = findall(fig_handle, 'Type', 'axes');
+for i_ax = 1:numel(ax_all)
+    set(ax_all(i_ax), ...
+        'FontName', 'SimHei', ...
+        'FontSize', 10, ...
+        'LineWidth', 1.0, ...
+        'Box', 'on', ...
+        'XGrid', 'on', ...
+        'YGrid', 'on', ...
+        'GridAlpha', 0.20, ...
+        'TickDir', 'out');
+end
+
+line_all = findall(fig_handle, 'Type', 'line');
+for i_ln = 1:numel(line_all)
+    if strcmp(get(line_all(i_ln), 'LineStyle'), 'none')
+        set(line_all(i_ln), 'LineWidth', 1.0);
+    else
+        set(line_all(i_ln), 'LineWidth', 1.5);
+    end
+end
+
+file_tiff = fullfile(out_dir, [out_name, '.tiff']);
+file_emf = fullfile(out_dir, [out_name, '.emf']);
+exportgraphics(fig_handle, file_tiff, 'Resolution', dpi);
+exportgraphics(fig_handle, file_emf, 'ContentType', 'vector');
+fprintf('【导出】%s\n', file_tiff);
+fprintf('【导出】%s\n', file_emf);
 end

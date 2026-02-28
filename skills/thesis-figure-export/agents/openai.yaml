@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thesis Figure Export"
+  short_description: "统一 MATLAB 论文图风格并自动导出高质量 tiff/emf 文件"
+  default_prompt: "将当前 MATLAB 脚本中的目标图按论文规范统一样式，并导出 tiff(300dpi)+emf。"
