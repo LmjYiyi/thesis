@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pandoc:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(\"/c/Program:*)",
+      "Bash(\"/c/Program Files/Pandoc/pandoc.exe\":*)",
+      "Bash(python3:*)",
+      "Bash(where python:*)",
+      "Bash(\"C:/Users/zhiwe/AppData/Local/Programs/Python/Python311/python.exe\":*)",
+      "Bash(python:*)"
+    ]
+  }
+}

@@ -161,8 +161,8 @@ ylabel('允许最大带宽 B_{max} (GHz)', 'Interpreter', 'tex', 'FontName', fon
 xlim([x_limit_min, x_limit_max]);
 ylim([0, y_limit_max]);
 
-legend([h_pt_safe, h_pt_fail], {'典型透射诊断工况', '失效工况'}, ...
-    'FontName', font_cn, 'FontSize', 9, 'Location', 'northeast', 'Box', 'on');
+legend([h_pt_safe, h_pt_fail], {'Case A (典型)', 'Case B (失效)'}, ...
+    'FontName', font_cn, 'FontSize', 9, 'Location', 'northwest', 'Box', 'on');
 
 %% 5. 高清输出
 output_dir = fullfile(fileparts(mfilename('fullpath')), '..', 'figures');

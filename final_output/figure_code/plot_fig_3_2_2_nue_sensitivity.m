@@ -64,6 +64,8 @@ legend(h_plots, legend_str, 'Location', 'NorthEast', 'FontSize', 10);
 set(gca, 'FontSize', 11);
 
 %% 辅助函数: 读取CST多列群时延数据
+export_thesis_figure(gcf, '图3-5_碰撞频率敏感性_CST', 14, 300, 'SimHei');
+
 function [freq, data, labels] = read_cst_multicolumn(filename)
     fid = fopen(filename, 'r');
     if fid == -1

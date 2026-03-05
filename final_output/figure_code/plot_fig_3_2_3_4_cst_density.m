@@ -8,7 +8,7 @@
 clc; clear; close all;
 
 %% ======================== 图3-6: 低电子密度 ========================
-figure('Name', '低电子密度CST仿真', 'Color', 'w', 'Position', [50 100 750 500]);
+fig1 = figure('Name', '低电子密度CST仿真', 'Color', 'w', 'Position', [50 100 750 500]);
 
 % 读取数据
 cst_file = '../../simulation/cst_data/low_density.txt';
@@ -56,7 +56,7 @@ legend(h_plots, legend_str, 'Location', 'NorthEast', 'FontSize', 10);
 set(gca, 'FontSize', 11);
 
 %% ======================== 图3-7: 高电子密度 ========================
-figure('Name', '高电子密度CST仿真', 'Color', 'w', 'Position', [850 100 750 500]);
+fig2 = figure('Name', '高电子密度CST仿真', 'Color', 'w', 'Position', [850 100 750 500]);
 
 % 读取数据
 cst_file = '../../simulation/cst_data/high_density.txt';
@@ -103,6 +103,10 @@ legend(h_plots, legend_str, 'Location', 'NorthEast', 'FontSize', 10);
 set(gca, 'FontSize', 11);
 
 %% ======================== 辅助函数 ========================
+drawnow; % ensure both figures are fully rendered before export
+export_thesis_figure(fig1, '图3-6_低电子密度_CST', 14, 300, 'SimHei');
+export_thesis_figure(fig2, '图3-7_高电子密度_CST', 14, 300, 'SimHei');
+
 function [freq, data, labels] = read_cst_multicolumn(filename)
     % 读取CST导出的多数据块群时延文件
     % 每个数据块以 #"Frequency / GHz" 开头

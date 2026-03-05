@@ -69,10 +69,10 @@ end
 % 在图例中补充 tau1/tau2 取值说明
 legend_entries = cell(1, numel(B0_targets));
 for i = 1:numel(B0_targets)
-    legend_entries{i} = sprintf('B_0=%.0f GHz, \\tau_1=%.3f ps/Hz, \\tau_2=%.2f fs^2/Hz', ...
-        B0_targets(i)/1e9, tau1_list(i)/1e-12, tau2/1e-30);
+    legend_entries{i} = sprintf('B_0=%.0f GHz, \\tau_1=%.3f ps/Hz', ...
+        B0_targets(i)/1e9, tau1_list(i)/1e-12);
 end
-legend(legend_entries, 'Location', 'northeast');
+legend(legend_entries, 'Location', 'northwest', 'FontSize', 9, 'Box', 'on');
 
 %% 4. 保存图表
 output_dir = fullfile(fileparts(mfilename('fullpath')), '..', 'figures');

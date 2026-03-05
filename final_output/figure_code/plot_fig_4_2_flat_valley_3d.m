@@ -81,7 +81,7 @@ end
 J_path_vals = interp2(NE, NU, J_log, ne_path, nu_path, 'spline');
 
 %% 6. 绘制3D曲面
-figure('Position', [100, 100, 1000, 700], 'Color', 'w');
+fig = figure('Position', [100, 100, 1000, 700], 'Color', 'w');
 
 % 坐标转换：
 % X轴：电子密度相对误差 (%)
@@ -150,7 +150,8 @@ annotation('textbox', [0.15, 0.75, 0.3, 0.1], ...
 hold off;
 
 % 保存
-export_thesis_figure(gcf, '图4-2_参数空间平底谷3D曲面', 14, 300, 'SimHei');
+drawnow;
+export_thesis_figure(fig, '图4-2_参数空间平底谷3D曲面', 14, 300, 'SimHei');
 fprintf('图 4-2 已保存。\n');
 
 %% 辅助函数

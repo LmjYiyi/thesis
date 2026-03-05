@@ -57,9 +57,8 @@ for i = 1:size(tau_data, 2)
     legend_str{end+1} = ['f_p = ' fp_str ' GHz'];
 end
 
-xlabel('探测频率 f (GHz)', 'FontSize', 12);
-ylabel('群时延 \tau_g (ns)', 'FontSize', 12);
-title('固定碰撞频率条件下不同电子密度的群时延曲线 (CST全波仿真)', 'FontSize', 13);
+xlabel('探测频率 \fontname{Times New Roman}\itf \rm(GHz)', 'FontName', 'SimSun', 'FontSize', 12, 'Interpreter', 'tex');
+ylabel('群时延 \fontname{Times New Roman}\it\tau_g \rm(ns)', 'FontName', 'SimSun', 'FontSize', 12, 'Interpreter', 'tex');
 
 xlim([20 40]);
 ylim([-2 12]);
@@ -68,6 +67,8 @@ legend(h_plots, legend_str, 'Location', 'NorthEast', 'FontSize', 10);
 set(gca, 'FontSize', 11);
 
 %% 辅助函数: 读取CST多列群时延数据
+export_thesis_figure(gcf, '图3-4_电子密度敏感性_CST', 14, 300, 'SimHei');
+
 function [freq, data, labels] = read_cst_multicolumn(filename)
     fid = fopen(filename, 'r');
     if fid == -1

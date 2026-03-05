@@ -306,17 +306,86 @@ xlabel('BW (GHz)'); ylabel('N (阶数)'); grid on;
 % 上三角: 线性相关系数 (Pearson Correlation)
 subplot(3,3,2);
 corr_F0_BW = corrcoef(samples_F0_valid, samples_BW_valid);
-text(0.5, 0.5, sprintf('相关系数 \\rho\n= %.3f', corr_F0_BW(1,2)), 'HorizontalAlignment', 'center', 'FontSize', 14); axis off;
+corr_F0_BW_val = corr_F0_BW(1,2);
+text(0.5, 0.5, sprintf('相关系数 \\rho\n= %.3f', corr_F0_BW_val), 'HorizontalAlignment', 'center', 'FontSize', 14); axis off;
 
 subplot(3,3,3);
 corr_F0_N = corrcoef(samples_F0_valid, samples_N_valid);
-text(0.5, 0.5, sprintf('相关系数 \\rho\n= %.3f', corr_F0_N(1,2)), 'HorizontalAlignment', 'center', 'FontSize', 14); axis off;
+corr_F0_N_val = corr_F0_N(1,2);
+text(0.5, 0.5, sprintf('相关系数 \\rho\n= %.3f', corr_F0_N_val), 'HorizontalAlignment', 'center', 'FontSize', 14); axis off;
 
 subplot(3,3,6);
 corr_BW_N = corrcoef(samples_BW_valid, samples_N_valid);
-text(0.5, 0.5, sprintf('相关系数 \\rho\n= %.3f', corr_BW_N(1,2)), 'HorizontalAlignment', 'center', 'FontSize', 14); axis off;
+corr_BW_N_val = corr_BW_N(1,2);
+text(0.5, 0.5, sprintf('相关系数 \\rho\n= %.3f', corr_BW_N_val), 'HorizontalAlignment', 'center', 'FontSize', 14); axis off;
+
+% 输出 Corner Plot 相关系数到控制台
+fprintf('\n========== Corner Plot 参数相关性分析 ==========\n');
+fprintf('F0-BW 相关系数 (rho): %.4f\n', corr_F0_BW_val);
+fprintf('F0-N  相关系数 (rho): %.4f\n', corr_F0_N_val);
+fprintf('BW-N  相关系数 (rho): %.4f\n', corr_BW_N_val);
+fprintf('================================================\n\n');
 
 sgtitle('图 5.X  多维物理参数联合后验分布与敏感度耦合分析 (Corner Plot)', 'FontSize', 15, 'FontWeight', 'bold');
+
+%% 打印完整仿真结果数据汇总
+fprintf('======================================================\n');
+fprintf('           MCMC 贝叶斯反演仿真结果完整数据汇总\n');
+fprintf('======================================================\n');
+
+fprintf('\n--- 输入观测数据信息 ---\n');
+fprintf('  原始ADS时域信号文件: hunpin_time_v.txt\n');
+fprintf('  有效观测特征点数: %d\n', length(X_fit));
+fprintf('  频率范围: %.2f - %.2f GHz\n', min(X_fit)/1e9, max(X_fit)/1e9);
+fprintf('  群延迟范围: %.4f - %.4f ns\n', min(Y_fit)*1e9, max(Y_fit)*1e9);
+fprintf('  权重范围: %.4f - %.4f\n', min(Weights), max(Weights));
+
+fprintf('\n--- MCMC 采样配置参数 ---\n');
+fprintf('  总采样步数: %d\n', N_samples);
+fprintf('  Burn-in 预烧期: %d\n', burn_in);
+fprintf('  有效后验采样: %d\n', N_samples - burn_in);
+fprintf('  接受率: %.2f%%\n', accept_count/N_samples*100);
+fprintf('  先验范围 F0: [%.2f, %.2f] GHz\n', F0_min/1e9, F0_max/1e9);
+fprintf('  先验范围 BW: [%.2f, %.2f] GHz\n', BW_min/1e9, BW_max/1e9);
+fprintf('  先验范围 N:  [%d, %d]\n', N_min, N_max);
+fprintf('  提议步长 sigma_F0: %.4f GHz\n', sigma_F0/1e9);
+fprintf('  提议步长 sigma_BW: %.4f GHz\n', sigma_BW/1e9);
+fprintf('  提议步长 sigma_N:  %.4f\n', sigma_N);
+fprintf('  测量误差 sigma_meas: %.2f ns\n', sigma_meas*1e9);
+
+fprintf('\n--- 后验参数推断结果 ---\n');
+fprintf('  F0 后验均值: %.6f GHz, 标准差: %.6f GHz\n', F0_mean/1e9, F0_std/1e9);
+fprintf('  F0 95%%置信区间: [%.6f, %.6f] GHz\n', F0_ci(1)/1e9, F0_ci(2)/1e9);
+fprintf('  BW 后验均值: %.6f GHz, 标准差: %.6f GHz\n', BW_mean/1e9, BW_std/1e9);
+fprintf('  BW 95%%置信区间: [%.6f, %.6f] GHz\n', BW_ci(1)/1e9, BW_ci(2)/1e9);
+fprintf('  N  后验均值: %.4f, 标准差: %.4f\n', N_mean, N_std);
+fprintf('  N  95%%置信区间: [%.2f, %.2f]\n', N_ci(1), N_ci(2));
+fprintf('  N  推荐整数阶数: %d\n', round(N_mean));
+
+fprintf('\n--- 后验对数似然值统计 ---\n');
+logL_valid = samples_logL(burn_in+1:end);
+fprintf('  最大对数似然: %.2f\n', max(logL_valid));
+fprintf('  最小对数似然: %.2f\n', min(logL_valid));
+fprintf('  平均对数似然: %.2f\n', mean(logL_valid));
+fprintf('  对数似然标准差: %.2f\n', std(logL_valid));
+
+fprintf('\n--- Corner Plot 相关系数矩阵 ---\n');
+fprintf('           F0          BW           N\n');
+fprintf('  F0   %.4f     %.4f     %.4f\n', 1.0, corr_F0_BW_val, corr_F0_N_val);
+fprintf('  BW   %.4f     %.4f     %.4f\n', corr_F0_BW_val, 1.0, corr_BW_N_val);
+fprintf('  N    %.4f     %.4f     %.4f\n', corr_F0_N_val, corr_BW_N_val, 1.0);
+
+fprintf('\n--- 推断精度评估 ---\n');
+fprintf('  F0 相对不确定度 (CV): %.4f%%\n', cv_F0*100);
+fprintf('  BW 相对不确定度 (CV): %.4f%%\n', cv_BW*100);
+fprintf('  N  相对不确定度 (CV): %.4f%%\n', cv_N*100);
+fprintf('  F0 置信区间宽度: %.4f GHz\n', (F0_ci(2)-F0_ci(1))/1e9);
+fprintf('  BW 置信区间宽度: %.4f GHz\n', (BW_ci(2)-BW_ci(1))/1e9);
+fprintf('  N  置信区间宽度: %.2f\n', N_ci(2)-N_ci(1));
+
+fprintf('\n======================================================\n');
+fprintf('              仿真结果数据输出完毕\n');
+fprintf('======================================================\n\n');
 
 % =========================================================================
 % 图 3: 贝叶斯极大后验理论重构与不确定性包络 (拟合效果图)
@@ -348,7 +417,7 @@ cb = colorbar; ylabel(cb, '动态似然权重系数', 'FontSize', 11);
 grid on; set(gca, 'GridAlpha', 0.3, 'FontSize', 11);
 xlabel('瞬时探测频率 (GHz)', 'FontSize', 12, 'FontWeight', 'bold');
 ylabel('解析重构器件群延迟 \tau (ns)', 'FontSize', 12, 'FontWeight', 'bold');
-xlim([34.4, 37.6]); ylim([0, 8]);
+xlim([34.4, 40]); ylim([0, 8]);
 title('图 5.X  完全未知(黑盒)状态下的贝叶斯物理色散特性连续重构', 'FontSize', 14);
 legend('Location', 'northeast', 'FontSize', 11);
 

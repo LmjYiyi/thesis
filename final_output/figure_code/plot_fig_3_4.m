@@ -128,4 +128,5 @@ for k = 1:length(fp_list)
          'FontSize', 10, 'BackgroundColor', 'w', 'EdgeColor', 'k');
 end
 
+export_thesis_figure(gcf, '图3-4_频谱散焦效应对比', 14, 300, 'SimHei');
 fprintf('仿真完成。请查看 Figure 1。\n');
