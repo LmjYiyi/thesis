@@ -8,7 +8,9 @@
       "Bash(git add:*)",
       "Bash(ls:*)",
       "Bash(git ls-tree:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)"
     ]
   }
 }
