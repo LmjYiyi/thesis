@@ -10,7 +10,10 @@
       "Bash(git ls-tree:*)",
       "Bash(git reset:*)",
       "Bash(python:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(git show:*)",
+      "mcp__chrome-devtools__new_page",
+      "mcp__chrome-devtools__take_snapshot"
     ]
   }
 }
