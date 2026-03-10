@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thesis Typo Check"
+  short_description: "Check thesis text for typos and wording slips"
+  default_prompt: "Use $thesis-typo-check to review thesis text for typos, missing characters, and obvious wording mistakes without rewriting the whole section."

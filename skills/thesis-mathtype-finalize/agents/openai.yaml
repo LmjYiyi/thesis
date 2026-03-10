@@ -1,0 +1,4 @@
+interface:
+  display_name: "MathType Finalize"
+  short_description: "Convert synced DOCX equations to MathType at finalization."
+  default_prompt: "Use $thesis-mathtype-finalize to convert OMML thesis equations in a synced DOCX into MathType objects and save a new version."

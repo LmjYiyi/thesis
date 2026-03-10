@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thesis DOCX Sync"
+  short_description: "将论文 Markdown 章节按标题同步回 Word 总稿并尽量保留样式"
+  default_prompt: "Use $thesis-docx-sync to update a thesis .docx section from Markdown while preserving the document's heading and paragraph styles."
