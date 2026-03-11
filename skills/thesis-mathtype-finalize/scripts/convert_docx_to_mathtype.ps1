@@ -90,7 +90,7 @@ docPath = WScript.Arguments(1)
 keepWordOpen = (LCase(WScript.Arguments(2)) = "true")
 manualSave = (LCase(WScript.Arguments(3)) = "true")
 
-Dim wordApp, doc, addinObj, addins, macroUsed
+Dim wordApp, doc, addinObj, addins, macroUsed, macroErrors
 Set wordApp = CreateObject("Word.Application")
 If Err.Number <> 0 Then
   WScript.StdErr.WriteLine "CreateObject failed: " & Err.Description
@@ -136,11 +136,14 @@ doc.Activate
 doc.Range.Select
 
 macroUsed = ""
+macroErrors = ""
 
 Err.Clear
 wordApp.Run "MathTypeCommands.UILib.MTCommand_ConvertEqns"
 If Err.Number = 0 Then
   macroUsed = "MathTypeCommands.UILib.MTCommand_ConvertEqns"
+Else
+  macroErrors = macroErrors & "MathTypeCommands.UILib.MTCommand_ConvertEqns => " & Err.Number & ": " & Err.Description & vbCrLf
 End If
 
 If macroUsed = "" Then
@@ -148,6 +151,8 @@ If macroUsed = "" Then
   wordApp.Run "MathTypeCommands.MTConvertEquations.DlgMain"
   If Err.Number = 0 Then
     macroUsed = "MathTypeCommands.MTConvertEquations.DlgMain"
+  Else
+    macroErrors = macroErrors & "MathTypeCommands.MTConvertEquations.DlgMain => " & Err.Number & ": " & Err.Description & vbCrLf
   End If
 End If
 
@@ -156,11 +161,14 @@ If macroUsed = "" Then
   wordApp.Run "MathTypeCommands.MTCommandsDispatchCls.MTCommandsMain_MTConvertEquations_DlgMain"
   If Err.Number = 0 Then
     macroUsed = "MathTypeCommands.MTCommandsDispatchCls.MTCommandsMain_MTConvertEquations_DlgMain"
+  Else
+    macroErrors = macroErrors & "MathTypeCommands.MTCommandsDispatchCls.MTCommandsMain_MTConvertEquations_DlgMain => " & Err.Number & ": " & Err.Description & vbCrLf
   End If
 End If
 
 If macroUsed = "" Then
   WScript.StdErr.WriteLine "MathType conversion macro failed."
+  WScript.StdErr.WriteLine macroErrors
   WScript.Quit 24
 End If
 

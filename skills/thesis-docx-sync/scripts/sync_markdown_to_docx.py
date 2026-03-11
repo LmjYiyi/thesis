@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
 
+from docx_figure_catalog import resolve_figure_asset
 from docx_xml_utils import (
     extract_body_children,
     find_heading,
@@ -69,6 +70,14 @@ def parse_args() -> argparse.Namespace:
             "Default: error."
         ),
     )
+    parser.add_argument(
+        "--image-source-docx",
+        type=Path,
+        help=(
+            "Optional source DOCX used as a fallback figure library when a Markdown image "
+            "path cannot be resolved locally. Matching is done by figure number such as 图5-1."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -77,10 +86,14 @@ def ensure_supported_input(args: argparse.Namespace) -> None:
         raise SystemExit("Only .docx is supported. Convert legacy .doc first.")
     if args.reference_docx and args.reference_docx.suffix.lower() != ".docx":
         raise SystemExit("--reference-docx must point to a .docx file.")
+    if args.image_source_docx and args.image_source_docx.suffix.lower() != ".docx":
+        raise SystemExit("--image-source-docx must point to a .docx file.")
     if not args.docx.exists():
         raise SystemExit(f"Target DOCX not found: {args.docx}")
     if not args.markdown.exists():
         raise SystemExit(f"Markdown file not found: {args.markdown}")
+    if args.image_source_docx and not args.image_source_docx.exists():
+        raise SystemExit(f"Image source DOCX not found: {args.image_source_docx}")
 
 
 def _rewrite_tagged_display_math(text: str) -> str:
@@ -369,11 +382,40 @@ def _build_missing_image_placeholder(alt_text: str, raw_path: str) -> str:
     return f"[Image missing: {label} | source: {raw_path}]"
 
 
+def _stage_docx_figure_asset(
+    alt_text: str,
+    raw_path: str,
+    image_source_docx: Path | None,
+    staged_dir: Path,
+    staged_index: int,
+) -> tuple[str | None, int]:
+    if image_source_docx is None:
+        return None, staged_index
+
+    lookup_text = alt_text.strip()
+    if raw_path.startswith("docx-figure://"):
+        lookup_text = raw_path[len("docx-figure://") :].strip() or lookup_text
+    elif not lookup_text:
+        lookup_text = Path(raw_path).name
+
+    resolved = resolve_figure_asset(image_source_docx, lookup_text)
+    if resolved is None:
+        return None, staged_index
+
+    payload, asset = resolved
+    staged_name = f"image-{staged_index}{asset.suffix}"
+    staged_path = staged_dir / staged_name
+    staged_path.write_bytes(payload)
+    rendered_alt = alt_text or asset.caption
+    return f"![{rendered_alt}](media_assets/{staged_name})", staged_index + 1
+
+
 def _stage_markdown_images(
     text: str,
     markdown_path: Path,
     temp_dir: Path,
     missing_image_mode: str,
+    image_source_docx: Path | None,
 ) -> tuple[str, list[str]]:
     project_root = Path.cwd().resolve()
     staged_dir = temp_dir / "media_assets"
@@ -387,10 +429,21 @@ def _stage_markdown_images(
         nonlocal staged_index
         alt_text = match.group(1)
         raw_path = match.group(2)
-        if re.match(r"^[a-zA-Z]+://", raw_path):
+        if re.match(r"^[a-zA-Z]+://", raw_path) and not raw_path.startswith("docx-figure://"):
             return match.group(0)
 
         resolved = _resolve_image_source(raw_path, markdown_path, project_root)
+        if resolved is None:
+            staged_markdown, next_index = _stage_docx_figure_asset(
+                alt_text,
+                raw_path,
+                image_source_docx,
+                staged_dir,
+                staged_index,
+            )
+            if staged_markdown is not None:
+                staged_index = next_index
+                return staged_markdown
         if resolved is None:
             missing.append(raw_path)
             if missing_image_mode == "placeholder":
@@ -410,6 +463,7 @@ def preprocess_markdown(
     markdown: Path,
     temp_dir: Path,
     missing_image_mode: str,
+    image_source_docx: Path | None,
 ) -> tuple[Path, list[str]]:
     original_text = markdown.read_text(encoding="utf-8")
     rewritten_text = _rewrite_tagged_display_math(original_text)
@@ -419,6 +473,7 @@ def preprocess_markdown(
         markdown,
         temp_dir,
         missing_image_mode,
+        image_source_docx,
     )
     if missing_images:
         unique = ", ".join(sorted(set(missing_images)))
@@ -435,11 +490,13 @@ def render_markdown(
     reference_docx: Path,
     temp_dir: Path,
     missing_image_mode: str,
+    image_source_docx: Path | None,
 ) -> tuple[Path, list[str]]:
     processed_markdown, missing_images = preprocess_markdown(
         markdown,
         temp_dir,
         missing_image_mode,
+        image_source_docx,
     )
     rendered_docx = temp_dir / "rendered.docx"
     resource_path = ";".join(
@@ -488,6 +545,7 @@ def main() -> int:
             reference_docx,
             temp_dir,
             args.missing_images,
+            args.image_source_docx,
         )
         source_children = extract_body_children(rendered_docx)
         source_children = postprocess_rendered_children(source_children)
@@ -542,6 +600,8 @@ def main() -> int:
             "missing images downgraded to placeholders: "
             + ", ".join(missing_images)
         )
+    if args.image_source_docx:
+        print(f"image source docx: {args.image_source_docx}")
     return 0
 
 
