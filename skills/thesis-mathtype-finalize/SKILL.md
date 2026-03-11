@@ -17,6 +17,13 @@ Use this skill only after Markdown-to-DOCX sync is already finished. Treat it as
 powershell -ExecutionPolicy Bypass -File skills\thesis-mathtype-finalize\scripts\probe_mathtype_env.ps1
 ```
 
+If auto-detection misses the local MathType template, rerun with an explicit template path:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File skills\thesis-mathtype-finalize\scripts\probe_mathtype_env.ps1 `
+  -TemplatePath "C:\Path\To\MathType Commands 6 For Word 2013.dotm"
+```
+
 2. Start from a copied `.docx` version, usually under `writing\versions\`.
 3. Run the finalize script:
 
@@ -24,6 +31,15 @@ powershell -ExecutionPolicy Bypass -File skills\thesis-mathtype-finalize\scripts
 powershell -ExecutionPolicy Bypass -File skills\thesis-mathtype-finalize\scripts\convert_docx_to_mathtype.ps1 `
   -InputDocx writing\versions\v4.docx `
   -OutputDocx writing\versions\v5.docx
+```
+
+If the machine uses a non-default MathType template name or location, pass the same `-TemplatePath` explicitly:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File skills\thesis-mathtype-finalize\scripts\convert_docx_to_mathtype.ps1 `
+  -InputDocx writing\versions\v4.docx `
+  -OutputDocx writing\versions\v5.docx `
+  -TemplatePath "C:\Path\To\MathType Commands 6 For Word 2013.dotm"
 ```
 
 4. Let Word open the MathType conversion dialog.
@@ -40,6 +56,7 @@ powershell -ExecutionPolicy Bypass -File skills\thesis-mathtype-finalize\scripts
 - Write to a new versioned file. Do not run this against the only master copy.
 - Keep the target document free of tracked changes before conversion.
 - Prefer the built-in MathType conversion dialog over fragile UI emulation.
+- Prefer auto-detection first, but keep `-TemplatePath` as the portable fallback across MathType versions and Office installs.
 - Expect possible layout drift in line spacing, equation number placement, and page breaks after conversion.
 - If Word COM or the MathType template is unavailable, stop and fall back to manual conversion inside Word.
 
@@ -51,12 +68,28 @@ powershell -ExecutionPolicy Bypass -File skills\thesis-mathtype-finalize\scripts
 powershell -ExecutionPolicy Bypass -File skills\thesis-mathtype-finalize\scripts\probe_mathtype_env.ps1
 ```
 
+- Probe with an explicit template path override:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File skills\thesis-mathtype-finalize\scripts\probe_mathtype_env.ps1 `
+  -TemplatePath "C:\Path\To\MathType Commands 6 For Word 2013.dotm"
+```
+
 - Convert a synced DOCX into a new finalized version:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File skills\thesis-mathtype-finalize\scripts\convert_docx_to_mathtype.ps1 `
   -InputDocx writing\versions\v4.docx `
   -OutputDocx writing\versions\v5.docx
+```
+
+- Convert with an explicit template path override:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File skills\thesis-mathtype-finalize\scripts\convert_docx_to_mathtype.ps1 `
+  -InputDocx writing\versions\v4.docx `
+  -OutputDocx writing\versions\v5.docx `
+  -TemplatePath "C:\Path\To\MathType Commands 6 For Word 2013.dotm"
 ```
 
 - Keep Word open after conversion for manual inspection:

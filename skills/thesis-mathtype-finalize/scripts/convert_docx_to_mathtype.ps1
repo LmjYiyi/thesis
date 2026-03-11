@@ -14,6 +14,25 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+function Get-TemplateCandidates {
+    $candidates = @(
+        (Join-Path $env:ProgramFiles 'Microsoft Office\root\Office16\STARTUP\MathType Commands 2016.dotm'),
+        (Join-Path $env:ProgramFiles 'Microsoft Office\root\Office16\STARTUP\MathType Commands for Word.dotm'),
+        (Join-Path $env:ProgramFiles 'Microsoft Office\root\Office16\STARTUP\MathType Commands 6 For Word 2013.dotm'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Microsoft Office\root\Office16\STARTUP\MathType Commands 2016.dotm'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Microsoft Office\root\Office16\STARTUP\MathType Commands for Word.dotm'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Microsoft Office\root\Office16\STARTUP\MathType Commands 6 For Word 2013.dotm'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Microsoft Office\Office16\STARTUP\MathType Commands 2016.dotm'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Microsoft Office\Office16\STARTUP\MathType Commands for Word.dotm'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Microsoft Office\Office16\STARTUP\MathType Commands 6 For Word 2013.dotm'),
+        (Join-Path $env:APPDATA 'Microsoft\Word\STARTUP\MathType Commands 2016.dotm'),
+        (Join-Path $env:APPDATA 'Microsoft\Word\STARTUP\MathType Commands for Word.dotm'),
+        (Join-Path $env:APPDATA 'Microsoft\Word\STARTUP\MathType Commands 6 For Word 2013.dotm')
+    ) | Where-Object { $_ }
+
+    return $candidates | Select-Object -Unique
+}
+
 function Resolve-TemplatePath {
     param([string]$CandidatePath)
 
@@ -24,15 +43,10 @@ function Resolve-TemplatePath {
         return (Resolve-Path -LiteralPath $CandidatePath).Path
     }
 
-    $candidates = @(@(
-        (Join-Path $env:ProgramFiles 'Microsoft Office\root\Office16\STARTUP\MathType Commands 2016.dotm'),
-        (Join-Path $env:ProgramFiles 'Microsoft Office\root\Office16\STARTUP\MathType Commands for Word.dotm'),
-        (Join-Path ${env:ProgramFiles(x86)} 'Microsoft Office\Office16\STARTUP\MathType Commands 2016.dotm'),
-        (Join-Path $env:APPDATA 'Microsoft\Word\STARTUP\MathType Commands 2016.dotm')
-    ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) })
+    $candidates = @(Get-TemplateCandidates | Where-Object { Test-Path -LiteralPath $_ })
 
     if (-not $candidates) {
-        throw 'No MathType Word template was found in the standard startup paths.'
+        throw 'No MathType Word template was found in the known startup paths. Pass -TemplatePath to override the auto-detection result.'
     }
 
     return $candidates[0]
