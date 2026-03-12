@@ -2,7 +2,7 @@
 % ADS 混频信号时延提取 - 终稿处理版（坚持科学基准扣除）
 % 1. 严格扣除系统真实时延 (0.2470 ns)
 % 2. 利用幅度阈值剔除阻带噪声
-% 3. 利用物理下限剔除通带内由纹波寄生调幅引起的算法失锁点
+% 3. 利用数据自举因果下界与局部连续性修正抑制通带失锁伪点
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clc; clear; close all;
 
@@ -50,82 +50,24 @@ xlim([0, f_if_limit/1e6]); % X 轴不留空白边距
 % 自动导出为论文统一风格
 export_thesis_figure(gcf, 'mix_spectrum_ads_hunpin', 14, 300);
 
-%% 3. ESPRIT 提取
-win_len = max(round(0.03 * length(s_proc)), 64);
-step_len = max(round(win_len / 8), 1);    
-L_sub = round(win_len / 2);            
-
-f_probe = []; tau_est = []; amp_est = []; quality_est = [];
-rms_threshold = max(abs(s_proc)) * 0.005; 
-num_windows = floor((length(s_proc) - win_len) / step_len) + 1;
-
-for i = 1:num_windows
-    idx = (i-1)*step_len+1 : (i-1)*step_len+win_len;
-    if idx(end) > length(s_proc), break; end
-    
-    x_win = s_proc(idx);
-    t_c = t_proc(idx(round(win_len/2)));
-    
-    if t_c > 0.99*T_m || t_c < 0.01*T_m || rms(x_win) < rms_threshold, continue; end
-    
-    M_sub = win_len - L_sub + 1;
-    X_h = zeros(L_sub, M_sub); for k=1:M_sub, X_h(:,k)=x_win(k:k+L_sub-1).'; end
-    R_x = ((X_h*X_h')/M_sub + fliplr(eye(L_sub))*conj((X_h*X_h')/M_sub)*fliplr(eye(L_sub)))/2;
-    
-    [V, D] = eig(R_x); [lam, id] = sort(diag(D), 'descend'); V = V(:,id);
-    mdl = zeros(length(lam),1);
-    for k=0:length(lam)-1
-        ns = lam(k+1:end); ns(ns<1e-30)=1e-30;
-        mdl(k+1) = -(length(lam)-k)*M_sub*log(prod(ns)^(1/length(ns))/mean(ns)) + 0.5*k*(2*length(lam)-k)*log(M_sub);
-    end
-    [~, k_est] = min(mdl); num_s = min(max(1, k_est-1), 3);
-    
-    Us = V(:,1:num_s);
-    est_f = abs(angle(eig((Us(1:end-1,:)'*Us(1:end-1,:))\(Us(1:end-1,:)'*Us(2:end,:))))) * f_s_proc/(2*pi);
-    est_f = est_f(est_f > 50e3 & est_f < f_s_proc/4);
-    
-    if ~isempty(est_f)
-        % --- 执行科学减法校准 ---
-        nfft_local = 2^nextpow2(max(length(x_win), 256));
-        xw = x_win(:) .* hann(length(x_win));
-        S_local = abs(fft(xw, nfft_local));
-        f_axis = (0:nfft_local-1).' * (f_s_proc / nfft_local);
-        band_mask = (f_axis > 50e3) & (f_axis < f_s_proc/4);
-        if any(band_mask)
-            S_band = S_local(band_mask);
-            quality_ratio = max(S_band) / (median(S_band) + eps);
-        else
-            quality_ratio = 1;
-        end
-
-        calibrated_tau = min(est_f)/K - baseline_delay;
-        
-        f_probe = [f_probe, f_start + K*t_c];
-        tau_est = [tau_est, calibrated_tau];
-        amp_est = [amp_est, rms(x_win)];
-        quality_est = [quality_est, quality_ratio];
-    end
-end
-
-%% 4. 数据清洗与结果作图
-% 规则1: 剔除阻带噪声（幅度阈值设为 20%）
-mask_amp = amp_est > max(amp_est) * 0.20; 
-% 规则2: 剔除由寄生调幅引起的失锁伪点（物理下限 1.85 ns）
-mask_physics = tau_est > 1.85e-9; 
-% 综合有效点
-valid_mask = mask_amp & mask_physics;
-f_valid = f_probe(valid_mask);
-tau_valid = tau_est(valid_mask);
-amp_valid = amp_est(valid_mask);
-quality_valid = quality_est(valid_mask);
+%% 3. ESPRIT 提取与盲化清洗
+obs = extract_ads_delay_observations();
+baseline_delay = obs.baseline_delay;
+f_valid = obs.f_fit;
+tau_valid = obs.tau_fit;
+amp_valid = obs.amp_fit;
+quality_valid = obs.quality_fit;
 
 fprintf('\n======================================================\n');
 fprintf('  ESPRIT 散点提取与质量概览\n');
 fprintf('======================================================\n');
-fprintf('  原始散点数: %d\n', length(f_probe));
-fprintf('  幅度阈值有效点: %d\n', sum(mask_amp));
-fprintf('  物理约束有效点: %d\n', sum(mask_physics));
-fprintf('  综合有效散点: %d\n', length(f_valid));
+fprintf('  原始散点数: %d\n', obs.diag.raw_count);
+fprintf('  幅度门限保留点: %d\n', obs.diag.amp_count);
+fprintf('  自举因果下界保留点: %d\n', obs.diag.floor_count);
+fprintf('  连续性修正点数: %d\n', obs.diag.repair_count);
+fprintf('  综合有效散点: %d\n', obs.diag.final_count);
+fprintf('  自举因果下界: %.4f ns\n', obs.tau_floor * 1e9);
+fprintf('  支持度边界: t_c / T_m in [%.3f, %.3f]\n', obs.edge_margin, 1 - obs.edge_margin);
 if ~isempty(quality_valid)
     fprintf('  质量指标 Q: median = %.2f, P10 = %.2f, P90 = %.2f\n', ...
         median(quality_valid), prctile(quality_valid, 10), prctile(quality_valid, 90));

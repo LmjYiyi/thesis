@@ -14,7 +14,8 @@
       "Bash(git show:*)",
       "mcp__chrome-devtools__new_page",
       "mcp__chrome-devtools__take_snapshot",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(git:*)"
     ]
   }
 }

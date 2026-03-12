@@ -1,0 +1,70 @@
+Multi-chain MCMC diagnostic summary
+chains=4
+samples_per_chain=18000
+burn_in=6000
+keep_per_chain=12000
+valid_points=45
+
+Posterior mean
+F0_GHz=36.970753
+BW_GHz=0.982523
+N=6.997350
+
+Posterior std
+F0_GHz=0.002195
+BW_GHz=0.004009
+N=0.286557
+
+Posterior 95% interval
+F0_GHz=[36.966427, 36.975008]
+BW_GHz=[0.974591, 0.990354]
+N=[6.525111, 7.473801]
+
+Posterior MAP
+F0_GHz=36.969706
+BW_GHz=0.983715
+N=7.427536
+
+Rhat
+F0=1.000219
+BW=1.000005
+N=1.000032
+
+ESS
+F0=5234.32
+BW=5377.38
+N=10674.17
+
+IACT
+F0=9.17
+BW=8.93
+N=4.50
+
+CV_percent
+F0=0.005937
+BW=0.408047
+N=4.095219
+
+Acceptance_percent_by_chain
+chain_1_F0=26.8778
+chain_1_BW=26.4889
+chain_1_N=45.1333
+chain_2_F0=26.2944
+chain_2_BW=27.0000
+chain_2_N=45.7944
+chain_3_F0=28.0167
+chain_3_BW=27.7500
+chain_3_N=45.8111
+chain_4_F0=27.3500
+chain_4_BW=28.6667
+chain_4_N=46.4333
+
+Correlation_matrix
+row_1=1.000000 0.299336 -0.010003
+row_2=0.299336 1.000000 -0.015520
+row_3=-0.010003 -0.015520 1.000000
+
+LogL
+max=-111.023375
+mean=-115.280189
+std=1.405740

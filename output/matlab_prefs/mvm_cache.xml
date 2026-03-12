@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MF0 version="1.1" packageUris="http://schema.mathworks.com/mf0/mvm_cache_model/R2020a">
+  <mvm.services.MVMCache type="mvm.services.MVMCache" uuid="90566acf-0ccf-43b9-a85c-e91a7b51f8a8">
+    <clientCapabilities>RuntimeUserInput</clientCapabilities>
+    <clientCapabilities>Swing</clientCapabilities>
+    <clientCapabilities>ComplexSwing</clientCapabilities>
+    <clientCapabilities>LocalClient</clientCapabilities>
+    <clientCapabilities>WebWindow</clientCapabilities>
+    <clientCapabilities>ModalDialogs</clientCapabilities>
+    <clientCapabilities>Debugging</clientCapabilities>
+    <currentWorkingDirectory>D:\桌面\lunwen\thesis\simulation\ADS</currentWorkingDirectory>
+    <cwdFileinfo type="mvm.services.FileInfo">
+      <isDirectory>true</isDirectory>
+      <location>D:\桌面\lunwen\thesis\simulation</location>
+      <modifiedUTC>2026-Mar-12 02:04:25.757261</modifiedUTC>
+      <name>ADS</name>
+      <separator>\</separator>
+      <writable>true</writable>
+    </cwdFileinfo>
+    <mvmCapabilities>Swing</mvmCapabilities>
+    <mvmCapabilities>ComplexSwing</mvmCapabilities>
+    <mvmCapabilities>LocalClient</mvmCapabilities>
+    <mvmCapabilities>WebWindow</mvmCapabilities>
+    <workspaceVarNames>ans</workspaceVarNames>
+    <workspaceVarNames>delay_data</workspaceVarNames>
+    <workspaceVarNames>f</workspaceVarNames>
+    <workspaceVarNames>f_true</workspaceVarNames>
+    <workspaceVarNames>idx</workspaceVarNames>
+    <workspaceVarNames>ii</workspaceVarNames>
+    <workspaceVarNames>j</workspaceVarNames>
+    <workspaceVarNames>m</workspaceVarNames>
+    <workspaceVarNames>mask</workspaceVarNames>
+    <workspaceVarNames>mask_flat</workspaceVarNames>
+    <workspaceVarNames>mask_peak</workspaceVarNames>
+    <workspaceVarNames>mask_transition</workspaceVarNames>
+    <workspaceVarNames>mask_unclassified</workspaceVarNames>
+    <workspaceVarNames>masks</workspaceVarNames>
+    <workspaceVarNames>names</workspaceVarNames>
+    <workspaceVarNames>obs</workspaceVarNames>
+    <workspaceVarNames>rc</workspaceVarNames>
+    <workspaceVarNames>rp</workspaceVarNames>
+    <workspaceVarNames>tau_post</workspaceVarNames>
+    <workspaceVarNames>tau_pre</workspaceVarNames>
+    <workspaceVarNames>tau_true</workspaceVarNames>
+    <workspaceVarNames>tau_true_i</workspaceVarNames>
+    <workspaceVarNames>xghz</workspaceVarNames>
+  </mvm.services.MVMCache>
+</MF0>

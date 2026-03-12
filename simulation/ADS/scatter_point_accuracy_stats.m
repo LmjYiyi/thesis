@@ -1,404 +1,140 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 时延特征点提取精度的定量评估
-% 功能：将 ESPRIT 提取的离散散点与 ADS S 参数群时延真值逐点对比，
-%       按频率分区计算 MAE、RMSE、最大偏差等统计指标
-% 依赖：hunpin_time_v.txt (ADS 仿真中频信号), delay.txt (ADS 真值群时延)
-% 输出：论文表 5-4 所需的分区精度统计数据
+% 用途：将 ESPRIT 提取散点与 ADS 群时延真值逐点对比，输出表 5-5 所需统计量
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clc; clear; close all;
 
 fprintf('======================================================\n');
 fprintf('  时延特征点提取精度定量评估\n');
-fprintf('  散点来源: 滑动窗口 ESPRIT + 三重物理约束清洗\n');
+fprintf('  散点来源: 滑动窗口 ESPRIT + 自举清洗\n');
 fprintf('  真值基准: ADS S 参数群时延 (delay.txt)\n');
 fprintf('======================================================\n\n');
-fprintf('算法版本: v2026-03-03-keepcount\n');
 
-%% 1. 嵌入的数据提取模块 (与 mcmc_bayesian_inversion.m 完全一致)
-% -------------------------------------------------------------------------
-data = readmatrix('hunpin_time_v.txt', 'FileType', 'text', 'NumHeaderLines', 1);
-valid = ~isnan(data(:,1)) & ~isnan(data(:,2));
-t_raw = data(valid, 1); v_raw = data(valid, 2);
-
-T_m = t_raw(end) - t_raw(1);
-f_start = 34.4e9; f_end = 37.61e9; 
-K = (f_end - f_start) / T_m;          
-baseline_delay = 0.2470e-9; 
-enable_bias_correction = true;
-
-fs_dec = 4e9; 
-t_dec = linspace(t_raw(1), t_raw(end), round(T_m * fs_dec)).';
-v_dec = interp1(t_raw, v_raw, t_dec, 'spline');
-[b_lp, a_lp] = butter(4, 200e6 / (fs_dec / 2));
-s_if = filtfilt(b_lp, a_lp, v_dec);
-s_proc = s_if(1:2:end); t_proc = t_dec(1:2:end); f_s_proc = fs_dec / 2;   
-
-win_len = max(round(0.03 * length(s_proc)), 64);
-step_len = max(round(win_len / 8), 1);    
-L_sub = round(win_len / 2);            
-
-f_probe = []; tau_est = []; amp_est = []; quality_est = [];
-rms_threshold = max(abs(s_proc)) * 0.005; 
-num_windows = floor((length(s_proc) - win_len) / step_len) + 1;
-
-for i = 1:num_windows
-    idx = (i-1)*step_len+1 : (i-1)*step_len+win_len;
-    if idx(end) > length(s_proc), break; end
-    
-    x_win = s_proc(idx);
-    t_c = t_proc(idx(round(win_len/2)));
-    
-    if t_c > 0.99*T_m || t_c < 0.01*T_m || rms(x_win) < rms_threshold, continue; end
-    
-    M_sub = win_len - L_sub + 1;
-    X_h = zeros(L_sub, M_sub); for k=1:M_sub, X_h(:,k)=x_win(k:k+L_sub-1).'; end
-    R_x = ((X_h*X_h')/M_sub + fliplr(eye(L_sub))*conj((X_h*X_h')/M_sub)*fliplr(eye(L_sub)))/2;
-    [V, D] = eig(R_x); [lam, id] = sort(diag(D), 'descend'); V = V(:,id);
-    mdl = zeros(length(lam),1);
-    for k=0:length(lam)-1
-        ns = lam(k+1:end); ns(ns<1e-30)=1e-30;
-        mdl(k+1) = -(length(lam)-k)*M_sub*log(prod(ns)^(1/length(ns))/mean(ns)) + 0.5*k*(2*length(lam)-k)*log(M_sub);
-    end
-    [~, k_est] = min(mdl); num_s = min(max(1, k_est-1), 3);
-    
-    Us = V(:,1:num_s);
-    est_f = abs(angle(eig((Us(1:end-1,:)'*Us(1:end-1,:))\(Us(1:end-1,:)'*Us(2:end,:))))) * f_s_proc/(2*pi);
-    est_f = est_f(est_f > 50e3 & est_f < f_s_proc/4);
-    
-    if ~isempty(est_f)
-        f_beat_est = min(est_f);
-        
-        % quality index: local peak prominence in IF spectrum (soft weight only)
-        nfft_local = 2^nextpow2(max(length(x_win), 256));
-        xw = x_win(:) .* hann(length(x_win));
-        S_local = abs(fft(xw, nfft_local));
-        f_axis = (0:nfft_local-1).' * (f_s_proc / nfft_local);
-        band_mask = (f_axis > 50e3) & (f_axis < f_s_proc/4);
-        if any(band_mask)
-            S_band = S_local(band_mask);
-            quality_ratio = max(S_band) / (median(S_band) + eps);
-        else
-            quality_ratio = 1;
-        end
-        
-        calibrated_tau = f_beat_est/K - baseline_delay;
-        f_probe = [f_probe, f_start + K*t_c];
-        tau_est = [tau_est, calibrated_tau];
-        amp_est = [amp_est, rms(x_win)];
-        quality_est = [quality_est, quality_ratio];
-    end
-end
-
-% 三重物理约束清洗 (与 mcmc_bayesian_inversion.m 一致)
-mask_amp = amp_est > max(amp_est) * 0.20; 
-mask_physics = tau_est > 1.85e-9; 
-valid_mask = mask_amp & mask_physics;
-
-X_fit = f_probe(valid_mask);   % 有效散点频率 (Hz)
-Y_fit = tau_est(valid_mask);   % 有效散点时延 (s)
-W_raw = amp_est(valid_mask);   % 有效散点 RMS 幅度
-
-Q_raw = quality_est(valid_mask);
-n_after_physics = length(X_fit);
+%% 1. Load cleaned observations shared with MCMC
+obs = extract_ads_delay_observations();
+X_fit = obs.f_fit;
+Y_fit = obs.tau_fit;
 
 if isempty(X_fit)
     error('有效散点为空，请检查 ESPRIT 参数或数据质量。');
 end
 
-% 软质量权重：不删点，仅调节权重
-q_p10 = prctile(Q_raw, 10);
-q_p90 = prctile(Q_raw, 90);
-q_norm = (Q_raw - q_p10) ./ (q_p90 - q_p10 + eps);
-q_norm = min(max(q_norm, 0), 1);
-W_raw = W_raw .* (0.55 + 0.45 * q_norm);
-if max(W_raw) > 0
-    W_raw = W_raw / max(W_raw);
-end
-n_after_quality = length(X_fit);
+fprintf('有效散点数: %d\n', numel(X_fit));
+fprintf('清洗统计: 原始 %d -> 幅度门限 %d -> 自举下界 %d -> 最终 %d，连续性修正 %d 点\n', ...
+    obs.diag.raw_count, obs.diag.amp_count, obs.diag.floor_count, ...
+    obs.diag.final_count, obs.diag.repair_count);
+fprintf('自举因果下界: %.4f ns\n', obs.tau_floor * 1e9);
+fprintf('频率范围: %.4f - %.4f GHz\n', min(X_fit) / 1e9, max(X_fit) / 1e9);
+fprintf('时延范围: %.4f - %.4f ns\n\n', min(Y_fit) * 1e9, max(Y_fit) * 1e9);
 
-% 零删点鲁棒修正：离群点替换 + 质量自适应平滑
-[X_fit, sort_idx] = sort(X_fit);
-Y_fit = Y_fit(sort_idx);
-W_raw = W_raw(sort_idx);
-Q_raw = Q_raw(sort_idx);
-
-win_robust = min(11, max(3, 2*floor(length(Y_fit)/20)+1));
-local_med = movmedian(Y_fit, win_robust);
-local_mad = movmedian(abs(Y_fit - local_med), win_robust) + 1e-13;
-robust_z = abs(Y_fit - local_med) ./ (1.4826 * local_mad);
-mask_outlier = robust_z > 3.5;
-
-if any(mask_outlier)
-    Y_fix = Y_fit;
-    outlier_idx = find(mask_outlier);
-    for ii = outlier_idx.'
-        left_idx = max(1, ii-2);
-        right_idx = min(length(Y_fit), ii+2);
-        idx_nb = left_idx:right_idx;
-        idx_nb = idx_nb(~mask_outlier(idx_nb));
-        if isempty(idx_nb)
-            Y_fix(ii) = local_med(ii);
-        else
-            w_nb = W_raw(idx_nb) + eps;
-            Y_fix(ii) = sum(w_nb .* Y_fit(idx_nb)) / sum(w_nb);
-        end
-    end
-    Y_fit = Y_fix;
-end
-
-win_smooth = min(9, max(3, 2*floor(length(Y_fit)/25)+1));
-if length(Y_fit) >= win_smooth
-    Y_med = movmedian(Y_fit, win_smooth);
-    Y_mean = movmean(Y_med, win_smooth);
-    q_norm2 = (Q_raw - min(Q_raw)) ./ (max(Q_raw) - min(Q_raw) + eps);
-    smooth_blend = 0.16 + 0.26 * (1 - q_norm2);
-    Y_fit = (1 - smooth_blend) .* Y_fit + smooth_blend .* Y_mean;
-end
-n_after_robust = length(X_fit);
-
-fprintf('ESPRIT 特征提取完成，有效散点数: %d\n', length(X_fit));
-fprintf('清洗统计: 物理约束后 %d 点 -> 质量软权重后 %d 点 -> 鲁棒修正后 %d 点 (零删点)\n', ...
-    n_after_physics, n_after_quality, n_after_robust);
-fprintf('质量软权重: Q P10=%.2f, P90=%.2f\n', q_p10, q_p90);
-fprintf('频率范围: %.2f - %.2f GHz\n', min(X_fit)/1e9, max(X_fit)/1e9);
-fprintf('时延范围: %.4f - %.4f ns\n\n', min(Y_fit)*1e9, max(Y_fit)*1e9);
-
-%% 2. 加载 ADS 群时延真值曲线 (delay.txt)
-% -------------------------------------------------------------------------
+%% 2. Load ADS truth curve
 delay_data = readmatrix('delay.txt', 'FileType', 'text', 'NumHeaderLines', 1);
-f_true = delay_data(:, 1);     % 频率 (Hz)
-tau_true = delay_data(:, 2);   % 群时延真值 (s)
+f_true = delay_data(:, 1);
+tau_true = delay_data(:, 2);
 
-fprintf('ADS 真值曲线加载成功，数据点数: %d\n', length(f_true));
-fprintf('频率范围: %.2f - %.2f GHz\n\n', min(f_true)/1e9, max(f_true)/1e9);
-
-%% 3. 逐点对比：在散点频率处插值获取真值
-% -------------------------------------------------------------------------
 tau_true_at_scatter = interp1(f_true, tau_true, X_fit, 'pchip');
-
-% 可选：在低色散平坦区做系统偏置校正，抑制整体正偏
-if enable_bias_correction
-    mask_bias_zone = (X_fit >= 36.7e9) & (X_fit <= 37.3e9);
-    if sum(mask_bias_zone) >= 5
-        bias_est = median(Y_fit(mask_bias_zone) - tau_true_at_scatter(mask_bias_zone));
-        Y_fit = Y_fit - bias_est;
-        tau_true_at_scatter = interp1(f_true, tau_true, X_fit, 'pchip');
-        fprintf('偏置校正: 平坦区中位残差 = %.4f ns，已整体扣除\n', bias_est*1e9);
-    else
-        warning('平坦区有效点不足，跳过偏置校正。');
-    end
-end
-
-% 提取残差 (散点 - 真值)
-residuals = Y_fit - tau_true_at_scatter;          % 单位: s
-abs_residuals = abs(residuals);                    % 绝对残差
+residuals = Y_fit - tau_true_at_scatter;
+abs_residuals = abs(residuals);
 
 fprintf('======================================================\n');
-fprintf('  全频段综合精度统计 (共 %d 个散点)\n', length(X_fit));
+fprintf('  全频段综合精度统计\n');
 fprintf('======================================================\n');
-fprintf('  MAE  (平均绝对误差):   %.4f ns\n', mean(abs_residuals)*1e9);
-fprintf('  RMSE (均方根误差):     %.4f ns\n', sqrt(mean(residuals.^2))*1e9);
-fprintf('  最大偏差 (Max |Δτ|):   %.4f ns\n', max(abs_residuals)*1e9);
-fprintf('  平均偏置 (Mean Δτ):    %.4f ns\n', mean(residuals)*1e9);
-fprintf('  标准差 (Std Δτ):       %.4f ns\n\n', std(residuals)*1e9);
+fprintf('  MAE  : %.4f ns\n', mean(abs_residuals) * 1e9);
+fprintf('  RMSE : %.4f ns\n', sqrt(mean(residuals.^2)) * 1e9);
+fprintf('  Max  : %.4f ns\n', max(abs_residuals) * 1e9);
+fprintf('  Bias : %.4f ns\n', mean(residuals) * 1e9);
+fprintf('  Std  : %.4f ns\n\n', std(residuals) * 1e9);
 
-%% 4. 分区精度统计 (论文表 5-4)
-% -------------------------------------------------------------------------
-% 频率分区定义 (单位: GHz → Hz)
-% 通带平坦区:    36.7 ~ 37.3 GHz (群时延梯度 ≤ 5 ns/GHz)
-% 色散过渡区:    36.5~36.7 GHz 和 37.3~37.5 GHz
-% 色散双峰陡变区: <36.5 GHz 和 >37.5 GHz (在有效散点范围内)
-
-X_GHz = X_fit / 1e9;  % 转换为 GHz 便于分区判定
-
-% 定义分区
+%% 3. Region-wise statistics for Table 5-5
+X_GHz = X_fit / 1e9;
 mask_flat = (X_GHz >= 36.7) & (X_GHz <= 37.3);
 mask_transition = ((X_GHz >= 36.5) & (X_GHz < 36.7)) | ...
                   ((X_GHz > 37.3) & (X_GHz <= 37.5));
 mask_peak = ((X_GHz >= 36.43) & (X_GHz < 36.5)) | (X_GHz > 37.5);
-
-% 兜底：未被以上三类覆盖的散点归入最近的分区
 mask_unclassified = ~mask_flat & ~mask_transition & ~mask_peak;
 if any(mask_unclassified)
-    fprintf('[警告] 存在 %d 个散点未被三个分区覆盖，将归入色散过渡区\n', sum(mask_unclassified));
     mask_transition = mask_transition | mask_unclassified;
 end
 
-% 计算各分区统计量
-zones = {'通带平坦区 (36.7~37.3 GHz)', '色散过渡区 (过渡带)', '色散双峰陡变区 (峰顶附近)'};
+zones = {'通带平坦区', '色散过渡区', '双峰陡变区'};
 masks = {mask_flat, mask_transition, mask_peak};
 
 fprintf('======================================================\n');
-fprintf('  分区精度统计 (论文表 5-4)\n');
+fprintf('  分区精度统计（表 5-5）\n');
 fprintf('======================================================\n');
-fprintf('%-35s | 散点数 | MAE(ns) | RMSE(ns) | MaxDev(ns) | 相对误差*\n', '频率分区');
-fprintf('%s\n', repmat('-', 1, 100));
-
-all_zone_data = {};  % 用于后续汇总输出
-
-for z = 1:length(zones)
-    m = masks{z};
-    n_pts = sum(m);
-    
+fprintf('%-16s | %6s | %8s | %8s | %10s | %10s\n', ...
+    '分区', '点数', 'MAE(ns)', 'RMSE(ns)', 'MaxDev(ns)', 'Bias(ns)');
+fprintf('%s\n', repmat('-', 1, 78));
+for z = 1:numel(zones)
+    mask_zone = masks{z};
+    n_pts = sum(mask_zone);
     if n_pts == 0
-        fprintf('%-35s | %6d | %7s | %8s | %10s | %s\n', zones{z}, 0, 'N/A', 'N/A', 'N/A', 'N/A');
-        all_zone_data{z} = struct('name', zones{z}, 'n', 0, 'mae', NaN, 'rmse', NaN, 'maxdev', NaN, 'rel_err', NaN);
+        fprintf('%-16s | %6d | %8s | %8s | %10s | %10s\n', ...
+            zones{z}, 0, 'N/A', 'N/A', 'N/A', 'N/A');
         continue;
     end
-    
-    res_zone = residuals(m);
-    abs_res_zone = abs_residuals(m);
-    tau_true_zone = tau_true_at_scatter(m);
-    
-    mae_zone = mean(abs_res_zone) * 1e9;
-    rmse_zone = sqrt(mean(res_zone.^2)) * 1e9;
-    maxdev_zone = max(abs_res_zone) * 1e9;
-    
-    % 相对误差 = MAE / 该分区理论群时延均值
-    mean_tau_true_zone = mean(abs(tau_true_zone)) * 1e9;
-    rel_err_zone = mae_zone / mean_tau_true_zone * 100;
-    
-    fprintf('%-35s | %6d | %7.4f | %8.4f | %10.4f | %6.2f%%\n', ...
-        zones{z}, n_pts, mae_zone, rmse_zone, maxdev_zone, rel_err_zone);
-    
-    all_zone_data{z} = struct('name', zones{z}, 'n', n_pts, 'mae', mae_zone, ...
-        'rmse', rmse_zone, 'maxdev', maxdev_zone, 'rel_err', rel_err_zone);
+
+    res_zone = residuals(mask_zone);
+    abs_zone = abs_residuals(mask_zone);
+    fprintf('%-16s | %6d | %8.4f | %8.4f | %10.4f | %+10.4f\n', ...
+        zones{z}, n_pts, mean(abs_zone) * 1e9, sqrt(mean(res_zone.^2)) * 1e9, ...
+        max(abs_zone) * 1e9, mean(res_zone) * 1e9);
 end
+fprintf('%s\n\n', repmat('-', 1, 78));
 
-% 全频段汇总行
-fprintf('%s\n', repmat('-', 1, 100));
-mae_all = mean(abs_residuals) * 1e9;
-rmse_all = sqrt(mean(residuals.^2)) * 1e9;
-maxdev_all = max(abs_residuals) * 1e9;
-mean_tau_true_all = mean(abs(tau_true_at_scatter)) * 1e9;
-rel_err_all = mae_all / mean_tau_true_all * 100;
-fprintf('%-35s | %6d | %7.4f | %8.4f | %10.4f | %6.2f%%\n', ...
-    '全频段综合', length(X_fit), mae_all, rmse_all, maxdev_all, rel_err_all);
-fprintf('======================================================\n\n');
-
-% *注释
-fprintf('* 相对误差定义: MAE / 该分区理论群时延均值\n\n');
-
-%% 5. 逐点残差明细表
-% -------------------------------------------------------------------------
-fprintf('======================================================\n');
-fprintf('  逐点残差明细 (供核验)\n');
-fprintf('======================================================\n');
-fprintf('%5s | %12s | %12s | %12s | %12s | %8s\n', ...
-    '序号', '频率(GHz)', '散点τ(ns)', '真值τ(ns)', '残差Δτ(ns)', '分区');
-
-for i = 1:length(X_fit)
-    % 判断分区
-    if mask_flat(i)
-        zone_label = '平坦区';
-    elseif mask_transition(i)
-        zone_label = '过渡区';
-    elseif mask_peak(i)
-        zone_label = '峰顶区';
-    else
-        zone_label = '未分类';
-    end
-    
-    fprintf('%5d | %12.4f | %12.4f | %12.4f | %+12.4f | %8s\n', ...
-        i, X_fit(i)/1e9, Y_fit(i)*1e9, tau_true_at_scatter(i)*1e9, ...
-        residuals(i)*1e9, zone_label);
+%% 4. Visualizations
+figure('Color', 'w', 'Position', [100, 100, 920, 620]);
+hold on;
+plot(f_true / 1e9, tau_true * 1e9, 'r-', 'LineWidth', 2, ...
+    'DisplayName', 'ADS 群时延真值');
+scatter(X_fit / 1e9, Y_fit * 1e9, 52, obs.amp_fit, 'filled', ...
+    'MarkerEdgeColor', 'k', 'LineWidth', 0.5, ...
+    'DisplayName', 'ESPRIT 清洗后散点');
+cb = colorbar;
+ylabel(cb, '中频信号 RMS', 'FontSize', 11);
+grid on;
+xlabel('瞬时探测频率 (GHz)', 'FontSize', 12);
+ylabel('群时延 \tau_g (ns)', 'FontSize', 12);
+title('散点与 ADS 群时延真值逐点对比', 'FontSize', 14);
+xlim([34.4, 37.6]);
+ylim([0, 8]);
+legend('Location', 'northwest', 'FontSize', 11);
+figure_dir = fullfile(pwd, '..', '..', 'output', 'figures');
+if ~exist(figure_dir, 'dir')
+    mkdir(figure_dir);
 end
-fprintf('======================================================\n\n');
+exportgraphics(gcf, fullfile(figure_dir, '第5章_图5-10_散点与真值对比.png'), 'Resolution', 300);
 
-%% 6. 可视化：散点与真值对比 + 残差分布
-% -------------------------------------------------------------------------
-
-% --- 图1: 散点与真值叠加 + 分区标注 ---
-figure('Color', 'w', 'Position', [100, 100, 900, 550]);
+figure('Color', 'w', 'Position', [150, 150, 920, 420]);
+subplot(1, 2, 1);
 hold on;
-
-% ADS 真值连续曲线
-plot(f_true/1e9, tau_true*1e9, '-', 'Color', [0.1 0.6 0.1], 'LineWidth', 2.5, ...
-    'DisplayName', 'ADS 群时延真值 \tau_g^{true}(f)');
-
-% 分区底色
-ylims = [0, 9];
-fill([36.7 37.3 37.3 36.7], [ylims(1) ylims(1) ylims(2) ylims(2)], ...
-    [0.9 0.95 1.0], 'FaceAlpha', 0.3, 'EdgeColor', 'none', 'DisplayName', '通带平坦区');
-fill([36.5 36.7 36.7 36.5], [ylims(1) ylims(1) ylims(2) ylims(2)], ...
-    [1.0 0.95 0.85], 'FaceAlpha', 0.3, 'EdgeColor', 'none', 'HandleVisibility', 'off');
-fill([37.3 37.5 37.5 37.3], [ylims(1) ylims(1) ylims(2) ylims(2)], ...
-    [1.0 0.95 0.85], 'FaceAlpha', 0.3, 'EdgeColor', 'none', 'DisplayName', '色散过渡区');
-
-% 散点 (颜色编码权重)
-Weights = (W_raw / max(W_raw)).^2;
-scatter(X_fit/1e9, Y_fit*1e9, 60, Weights, 'filled', 'MarkerEdgeColor', 'k', ...
-    'LineWidth', 0.5, 'DisplayName', 'ESPRIT 提取散点');
-cb = colorbar; ylabel(cb, '归一化权重 w_k', 'FontSize', 11);
-
-grid on; set(gca, 'GridAlpha', 0.3, 'FontSize', 11);
-xlabel('瞬时探测频率 (GHz)', 'FontSize', 12, 'FontWeight', 'bold');
-ylabel('群时延 \tau_g (ns)', 'FontSize', 12, 'FontWeight', 'bold');
-xlim([36.3, 37.7]); ylim(ylims);
-title('散点与 ADS 真值逐点对比 (分区标注)', 'FontSize', 14);
-legend('Location', 'northeast', 'FontSize', 10);
-
-% --- 图2: 残差分布图 ---
-figure('Color', 'w', 'Position', [150, 150, 900, 450]);
-
-subplot(1,2,1);
-hold on;
-% 按分区绘制残差散点
-colors = {[0.2 0.6 0.8], [0.9 0.6 0.1], [0.8 0.2 0.2]};
-zone_labels_short = {'平坦区', '过渡区', '峰顶区'};
-for z = 1:length(masks)
-    m = masks{z};
-    if sum(m) > 0
-        scatter(X_fit(m)/1e9, residuals(m)*1e9, 50, colors{z}, 'filled', ...
-            'DisplayName', zone_labels_short{z});
+zone_colors = {[0.2 0.6 0.8], [0.9 0.6 0.1], [0.8 0.2 0.2]};
+for z = 1:numel(masks)
+    mask_zone = masks{z};
+    if any(mask_zone)
+        scatter(X_fit(mask_zone) / 1e9, residuals(mask_zone) * 1e9, 48, zone_colors{z}, ...
+            'filled', 'DisplayName', zones{z});
     end
 end
 yline(0, 'k--', 'LineWidth', 1, 'HandleVisibility', 'off');
-yline(0.17, 'r:', 'RMSE', 'LineWidth', 1, 'HandleVisibility', 'off');
-yline(-0.17, 'r:', '', 'LineWidth', 1, 'HandleVisibility', 'off');
 grid on;
 xlabel('瞬时探测频率 (GHz)', 'FontSize', 12);
 ylabel('残差 \Delta\tau (ns)', 'FontSize', 12);
-title('(a) 逐点残差 vs 频率', 'FontSize', 13);
+title('(a) 逐点残差分布', 'FontSize', 13);
 legend('Location', 'best', 'FontSize', 10);
 
-subplot(1,2,2);
-histogram(residuals*1e9, 15, 'Normalization', 'pdf', 'FaceColor', [0.3 0.5 0.7], 'EdgeAlpha', 0.3);
+subplot(1, 2, 2);
+histogram(residuals * 1e9, 15, 'Normalization', 'pdf', ...
+    'FaceColor', [0.3 0.5 0.7], 'EdgeAlpha', 0.3);
 hold on;
 xline(0, 'k--', 'LineWidth', 1);
-xline(mean(residuals)*1e9, 'r-', 'LineWidth', 2);
+xline(mean(residuals) * 1e9, 'r-', 'LineWidth', 2);
 grid on;
 xlabel('残差 \Delta\tau (ns)', 'FontSize', 12);
 ylabel('概率密度', 'FontSize', 12);
 title('(b) 残差直方图', 'FontSize', 13);
-legend({'残差分布', '零基线', sprintf('均值 = %.4f ns', mean(residuals)*1e9)}, ...
+legend({'残差分布', '零基线', sprintf('均值 = %.4f ns', mean(residuals) * 1e9)}, ...
     'Location', 'best', 'FontSize', 10);
 
-sgtitle('时延特征点提取精度：残差分析', 'FontSize', 15, 'FontWeight', 'bold');
-
-%% 7. 输出论文表格格式 (可直接复制至 Markdown)
-% -------------------------------------------------------------------------
-fprintf('\n======================================================\n');
-fprintf('  论文 Markdown 表格输出 (可直接复制)\n');
-fprintf('======================================================\n\n');
-
-fprintf('**表5-4** 时延特征点提取精度统计（与ADS S参数真值逐点对比）\n\n');
-fprintf('| 频率分区 | 散点数 | MAE (ns) | RMSE (ns) | 最大偏差 (ns) | 相对误差* |\n');
-fprintf('|:----:|:----:|:----:|:----:|:----:|:----:|\n');
-
-for z = 1:length(all_zone_data)
-    d = all_zone_data{z};
-    if d.n > 0
-        fprintf('| %s | %d | %.2f | %.2f | %.2f | %.1f%% |\n', ...
-            d.name, d.n, d.mae, d.rmse, d.maxdev, d.rel_err);
-    end
-end
-fprintf('| **全频段综合** | **%d** | **%.2f** | **%.2f** | **%.2f** | **%.1f%%** |\n', ...
-    length(X_fit), mae_all, rmse_all, maxdev_all, rel_err_all);
-fprintf('\n*注：相对误差定义为MAE与该分区理论群时延均值之比。\n');
-
-fprintf('\n======================================================\n');
-fprintf('  精度评估输出完毕\n');
-fprintf('======================================================\n');
-
-
+sgtitle('时延特征点提取精度统计', 'FontSize', 15, 'FontWeight', 'bold');
+exportgraphics(gcf, fullfile(figure_dir, '第5章_图5-10_残差统计.png'), 'Resolution', 300);
