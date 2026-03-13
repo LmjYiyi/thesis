@@ -15,7 +15,10 @@
       "mcp__chrome-devtools__new_page",
       "mcp__chrome-devtools__take_snapshot",
       "Bash(sed:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(rm:*)",
+      "Bash(cp:*)",
+      "Bash(chcp 936:*)"
     ]
   }
 }

@@ -43,7 +43,7 @@ stem(f_if(idx_if)/1e6, S_if_mag(idx_if), 'b', 'MarkerSize', 2);
 grid on;
 xlabel('频率 (MHz)', 'FontSize', 12, 'FontWeight', 'bold');
 ylabel('归一化幅值 (无量纲)', 'FontSize', 12, 'FontWeight', 'bold');
-title('混频信号离散频谱图 (ADS: hunpin_time_v)', 'FontSize', 13);
+title('差频信号离散频谱图', 'FontSize', 13);
 set(gca, 'FontName', 'SimHei', 'FontSize', 11);
 xlim([0, f_if_limit/1e6]); % X 轴不留空白边距
 
