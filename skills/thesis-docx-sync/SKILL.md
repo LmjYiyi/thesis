@@ -148,6 +148,13 @@ python skills/thesis-docx-sync/scripts/sync_markdown_to_docx.py ^
 
 ## Decision Notes
 
+**IMPORTANT: Abstract files must be split into separate files.**
+- The Chinese abstract (`摘要_中文.md`) and English abstract (`摘要_英文.md`) MUST be stored as separate Markdown files.
+- Each abstract file must contain ONLY ONE top-level heading (`# 摘要` or `# ABSTRACT`).
+- NEVER combine both abstracts in a single file (e.g., `摘要_中英文.md`) — this will cause heading conflicts during sync and result in duplicate "Abstract" entries in the Word document.
+- When syncing abstracts, use `--level 0` to match non-numbered headings (level 0 in the Word template).
+- Sync order: Chinese abstract first, then English abstract.
+
 - If the requested fragment contains images or Word-only objects that are not ordinary Markdown images, split the task: sync text automatically, then place those objects manually in Word.
 - If Markdown image file paths are broken because of historical encoding damage or missing asset folders, prefer `--image-source-docx` over hand-copying figures from Word.
 - If the project already has a canonical figure directory, do not generate helper assets inside it just to satisfy DOCX insertion. Fix the Markdown path or stage conversions in a temp folder instead.
@@ -157,3 +164,7 @@ python skills/thesis-docx-sync/scripts/sync_markdown_to_docx.py ^
 - If the requested chapter exists only as several section Markdown files, use `scripts/build_markdown_chapter.py` to create a temporary merged chapter file before sync.
 - If the output file is open in Word, write to a new output path or close Word before rerunning the sync.
 - If the chapter updates headings, captions, bookmarks, or note references, refresh fields in Word before judging the table of contents or figure/table index pages.
+
+**IMPORTANT: Chapter title matching.**
+- When merging multiple Markdown files into one chapter, use the FULL chapter title (e.g., "第三章 宽带信号在色散介质中的传播机理与方法失效分析") as the `--title` parameter, NOT just "第3章".
+- The merged file's first heading must match the Word template's existing chapter heading text (e.g., match "诊断系统硬件设计" instead of expecting "第3章" to automatically replace it).

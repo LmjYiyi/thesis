@@ -18,7 +18,13 @@
       "Bash(git:*)",
       "Bash(rm:*)",
       "Bash(cp:*)",
-      "Bash(chcp 936:*)"
+      "Bash(chcp 936:*)",
+      "Bash(chcp 65001:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python:*)",
+      "Bash(pandoc:*)",
+      "Bash(copy:*)",
+      "Bash(python3:*)",
+      "Bash(unzip:*)"
     ]
   }
 }
