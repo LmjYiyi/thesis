@@ -24,7 +24,8 @@
       "Bash(pandoc:*)",
       "Bash(copy:*)",
       "Bash(python3:*)",
-      "Bash(unzip:*)"
+      "Bash(unzip:*)",
+      "Bash(mkdir:*)"
     ]
   }
 }
