@@ -3,20 +3,20 @@
 ## 1. 当前数据驱动版本的主逻辑结论
 
 - 当前主脚本是 `extract_exp_trajectory_data_driven.m`。
-- 当前右侧重建核心模块是 `rebuild_right_edge_local.m`。
+- 当前右侧重建核心模块是 `lib/refine_edge_segment.m`（原 `rebuild_right_edge_local.m`，已内联并重命名）。
 - 当前右侧新增点来自原始数据窗口中的 `ESPRIT` 候选模态，不再直接使用左侧镜像先验。
-- 当前 `rebuild_right_edge_local.m` 中已经去掉了：
+- 当前 `refine_edge_segment.m` 中已经去掉了：
   - `build_left_prior(...)`
   - `f_left_query = 2 * f_center - f_query` 这类镜像坐标映射
   - 基于左侧镜像点的目标预测分支
-- 因此，从“提取与重建主逻辑”来看，当前版本已经可以视为“纯右侧数据点驱动”。
+- 因此，从"提取与重建主逻辑"来看，当前版本已经可以视为"纯右侧数据点驱动"。
 
 ## 2. 需要说明的边界
 
 - 虽然提取主逻辑已经不再使用镜像先验，但绘图阶段仍会叠加一条外部参考曲线：
-  - `likely_filter_delay_curve.m`
+  - `lib/likely_filter_delay_curve.m`
 - 这条曲线只用于图上参考，不参与右侧重建与点筛选。
-- 如果后续文件名要强调“纯数据驱动版”，应明确：
+- 如果后续文件名要强调"纯数据驱动版"，应明确：
   - 算法主流程是纯数据驱动
   - 图中红色参考曲线不是提取真值，只是工程参考
 
@@ -40,7 +40,7 @@
 
 诊断脚本：
 
-- `diagnose_right_edge_difficulty.m`
+- `diagnose_edge_difficulty.m`（原 `diagnose_right_edge_difficulty.m`，已通用化并重命名）
 
 在完成频率轴校准后，当前定量诊断支持以下结论。
 
@@ -50,7 +50,7 @@
 - `flat_mid` 的 `RMS = 0.084 mV`
 - `right_edge` 的 `RMS = 0.080 mV`
 
-左右与中段的 `RMS` 差异不大，说明右侧并不是“信号幅度明显塌陷”，因此右侧提取困难不宜简单归因为低信噪比。
+左右与中段的 `RMS` 差异不大，说明右侧并不是"信号幅度明显塌陷"，因此右侧提取困难不宜简单归因为低信噪比。
 
 ### 4.2 右侧最显著的问题是边界支撑不足
 
@@ -71,7 +71,7 @@
 - `right_shoulder`: `IQR = 0.360 ns`, `STD = 0.320 ns`
 - `right_edge`: `IQR = 0.589 ns`, `STD = 0.885 ns`
 
-其中 `right_edge` 的 `IQR` 与 `STD` 最大，说明同一点位在不同窗口长度、不同 `L_sub` 配置下的估计分散最严重。也就是说，右侧边缘不是“完全提不出来”，而是“不同配置下答案不稳定”，这是右侧必须单独重建的最强证据。
+其中 `right_edge` 的 `IQR` 与 `STD` 最大，说明同一点位在不同窗口长度、不同 `L_sub` 配置下的估计分散最严重。也就是说，右侧边缘不是"完全提不出来"，而是"不同配置下答案不稳定"，这是右侧必须单独重建的最强证据。
 
 ### 4.4 子空间可分辨性下降是辅助因素，不是唯一主因
 
@@ -85,7 +85,7 @@
 - 子空间可分辨性下降是助推因素
 - 边界效应和多配置不一致性才是主导因素
 
-### 4.5 当前诊断不支持“高频混叠主导”
+### 4.5 当前诊断不支持"高频混叠主导"
 
 从当前结果看：
 
@@ -97,51 +97,65 @@
 
 - 右侧存在边界窗导致的谱泄漏
 - 存在模态竞争与子空间失稳
-- 但不应直接表述为“高频混叠是主因”
+- 但不应直接表述为"高频混叠是主因"
 
 ### 4.6 当前最稳妥的总括
 
 > 右侧边缘提取困难的根本原因是扫频末端边界导致窗口有效支撑不足，使不同窗口配置下的群时延估计一致性显著恶化，同时子空间可分辨性有所下降；而信号幅度并未明显衰减，因此问题不宜归因于简单的低信噪比或采样混叠。
 
-## 5. 对目录整理的判断
+## 5. 目录结构（重构后）
 
-当前 `simulation/ADS/ex/` 目录中，主线需要保留并保证可运行的入口文件为：
+重构为"入口脚本 + lib 函数库"架构。所有函数模块移入 `lib/` 子目录，入口脚本通过 `addpath('lib')` 引用。
 
-- `extract_exp_trajectory_mirror.m`
-- `extract_exp_trajectory_baseline.m`
-- `extract_exp_trajectory_data_driven.m`
-- `plot_exp_spectrum.m`
+```
+ex/
+  extract_exp_trajectory_baseline.m      # 入口：基线版（仅固定窗口）
+  extract_exp_trajectory_mirror.m        # 入口：镜像版
+  extract_exp_trajectory_data_driven.m   # 入口：纯数据驱动版
+  diagnose_edge_difficulty.m             # 入口：边缘提取困难诊断
+  plot_exp_spectrum.m                    # 入口：频谱绘图（独立，无 lib 依赖）
+  note.md                               # 本文件
+  data/                                  # 实测数据 CSV
+  lib/                                   # 函数模块
+    cfg_lowpass_filter.m                 #   数据集配置工厂
+    run_trajectory_pipeline.m            #   主管线（加载→预处理→提取→校准→融合→重建）
+    load_measured_dataset.m              #   数据加载
+    preprocess_if_signal.m              #   预处理（去直流、叠加平均、降采样、滤波）
+    esprit_extract.m                     #   ESPRIT/MDL 提取算法
+    trajectory_postprocess.m             #   后处理（清洗、校准、融合、区域分类、导出）
+    refine_edge_segment.m               #   边缘精细重建（数据驱动，原 rebuild_right_edge_local.m）
+    rebuild_right_edge.m                 #   边缘镜像重建（镜像先验版）
+    likely_filter_delay_curve.m          #   参考群时延曲线构造
+    plot_trajectory_result.m             #   统一绘图与 TIFF 导出
+    load_reference_group_delay.m         #   参考群时延加载（stub，预留 .s2p 接口）
+```
 
-这些入口依赖的核心模块为：
+### 已删除的旧文件
 
-- `esprit_extract.m`
-- `trajectory_postprocess.m`
-- `rebuild_right_edge.m`
-- `rebuild_right_edge_local.m`
-- `likely_filter_delay_curve.m`
+- `rebuild_right_edge_local.m` — 代码已内联到 `lib/refine_edge_segment.m`
+- `diagnose_right_edge_difficulty.m` — 已被 `diagnose_edge_difficulty.m` 替代
 
-当前主线无用、适合后续归档而非直接删除的候选包括：
-
-- `compare_exp_data_quality.m`
-
-数据目录中当前主线未直接使用、可考虑归档的候选包括：
+### 数据目录中当前主线未直接使用、可考虑归档的候选
 
 - `data/lowpassfilter_filter_1.csv`
 - `data/lowpassfilter_filter_2.csv`
 - `data/Trace_0005.csv`
 - `data/Trace_0006.csv`
 
-## 6. 当前命名规范判断
+## 6. 命名规范
 
-- `esprit_extract.m`：负责提点
-- `trajectory_postprocess.m`：负责洗点、校准、融合
-- `rebuild_right_edge.m`：负责镜像版右侧重建
-- `rebuild_right_edge_local.m`：负责纯右侧数据驱动的右侧重建
+重构后命名已统一为"功能职责"风格：
 
-当前目录命名风格仍是混杂的：
+| 文件 | 职责 |
+|------|------|
+| `cfg_lowpass_filter.m` | 数据集参数配置 |
+| `run_trajectory_pipeline.m` | 管线编排 |
+| `load_measured_dataset.m` | 数据加载 |
+| `preprocess_if_signal.m` | 信号预处理 |
+| `esprit_extract.m` | ESPRIT 提取算法 |
+| `trajectory_postprocess.m` | 后处理（清洗/校准/融合/工具函数） |
+| `refine_edge_segment.m` | 边缘数据驱动重建 |
+| `rebuild_right_edge.m` | 边缘镜像重建 |
+| `plot_trajectory_result.m` | 结果绘图与导出 |
 
-- 有按算法命名的
-- 有按处理动作命名的
-- 有按输出目标命名的
-
-如果后续要继续规范命名，建议统一成“流程阶段 + 处理对象”的方式。
+入口脚本统一以 `extract_exp_trajectory_` 为前缀，通过配置覆盖选择不同模式。

@@ -6,6 +6,11 @@ function fn = trajectory_postprocess()
 fn.clean     = @postprocess_points;
 fn.calibrate = @calibrate_frequency_axis;
 fn.fuse      = @fuse_hybrid_result;
+fn.define_regions    = @define_regions;
+fn.classify_region   = @classify_region;
+fn.decode_source     = @decode_source;
+fn.export_figure     = @export_thesis_figure;
+fn.print_diagnostics = @print_delay_shape_diagnostics;
 end
 
 %% ---- 后处理：幅度/IQR/连续性清洗 ----
@@ -134,5 +139,96 @@ if show_summary
     fprintf('  混合频段: [%.2f, %.2f] GHz\n', cfg.f_flat_lo/1e9, cfg.f_flat_hi/1e9);
     fprintf('  固定窗口边缘: %d, 自适应中段: %d, 总点数: %d\n', ...
         sum(mask_edge), sum(mask_adapt), numel(out.f_probe));
+end
+end
+
+%% ---- 区域定义（由 cfg.regions 生成边界表） ----
+function regions_table = define_regions(cfg)
+r = cfg.regions;
+regions_table = {
+    'left_edge',      r.left_edge(1),      r.left_edge(2);
+    'left_shoulder',  r.left_shoulder(1),   r.left_shoulder(2);
+    'flat_mid',       r.flat_mid(1),        r.flat_mid(2);
+    'right_shoulder', r.right_shoulder(1),  r.right_shoulder(2);
+    'right_edge',     r.right_edge(1),      r.right_edge(2);
+};
+end
+
+%% ---- 频率区域分类 ----
+function region_name = classify_region(f_val, cfg)
+r = cfg.regions;
+if f_val < r.left_edge(2)
+    region_name = 'left_edge';
+elseif f_val < r.left_shoulder(2)
+    region_name = 'left_shoulder';
+elseif f_val <= r.flat_mid(2)
+    region_name = 'flat_mid';
+elseif f_val < r.right_shoulder(2)
+    region_name = 'right_shoulder';
+else
+    region_name = 'right_edge';
+end
+end
+
+%% ---- 来源代码解码 ----
+function source_name = decode_source(in, idx)
+source_name = 'n/a';
+if ~isfield(in, 'source_code'), return; end
+switch in.source_code(idx)
+    case 1, source_name = 'base';
+    case 2, source_name = 'adapt';
+    case 3, source_name = 'rebuild';
+    otherwise, source_name = 'unknown';
+end
+end
+
+%% ---- 论文插图统一导出 ----
+function export_thesis_figure(fig_handle, out_name, width_cm, dpi)
+if nargin < 3, width_cm = 14; end
+if nargin < 4, dpi = 300; end
+
+height_cm = width_cm * 0.618;
+lib_dir = fileparts(mfilename('fullpath'));
+out_dir = fullfile(fileparts(lib_dir), '..', 'figures_export');
+if ~exist(out_dir, 'dir'), mkdir(out_dir); end
+
+set(fig_handle, 'Color', 'w', 'Units', 'centimeters', ...
+    'Position', [2 2 width_cm height_cm], ...
+    'PaperUnits', 'centimeters', ...
+    'PaperPosition', [0 0 width_cm height_cm], ...
+    'PaperSize', [width_cm height_cm]);
+
+for ax = findall(fig_handle, 'Type', 'axes').'
+    set(ax, 'FontName', 'SimHei', 'FontSize', 10, 'LineWidth', 1.0, ...
+        'Box', 'on', 'XGrid', 'on', 'YGrid', 'on', ...
+        'GridAlpha', 0.20, 'TickDir', 'out');
+end
+for ln = findall(fig_handle, 'Type', 'line').'
+    if strcmp(get(ln, 'LineStyle'), 'none')
+        set(ln, 'LineWidth', 1.0);
+    else
+        set(ln, 'LineWidth', 1.5);
+    end
+end
+
+file_tiff = fullfile(out_dir, [out_name, '.tiff']);
+exportgraphics(fig_handle, file_tiff, 'Resolution', dpi);
+fprintf('【导出】%s\n', file_tiff);
+end
+
+%% ---- 时延形状诊断表 ----
+function print_delay_shape_diagnostics(in, tag_name, cfg)
+fprintf('\n===== Shape Diagnostics (%s) =====\n', tag_name);
+
+[f_s, si] = sort(in.f_probe);
+tau_s = in.tau(si);
+
+fprintf('  idx   f_probe(GHz)   tau(ns)   region           source\n');
+for i = 1:numel(f_s)
+    tau_ns = tau_s(i) * 1e9;
+    region_name = classify_region(f_s(i), cfg);
+    source_name = decode_source(in, si(i));
+    fprintf('  %3d   %10.3f   %7.3f   %-14s %-8s\n', ...
+        i, f_s(i)/1e9, tau_ns, region_name, source_name);
 end
 end

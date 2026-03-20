@@ -1,9 +1,10 @@
-function out = rebuild_right_edge_local(hybrid_cal, v_proc, t_proc, fs_proc, ...
+function out = refine_edge_segment(hybrid_cal, v_proc, t_proc, fs_proc, ...
     f_start, K, rms_thr, base_cal, cfg, f_valid_lo, f_beat_max, show_summary)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Right-edge rebuild driven by local data only.
+% 边缘段精细重建（数据驱动，基于局部连续性与多窗口共识）
+% 通用化版本，替代原 rebuild_right_edge_local.m。
 % Strategy:
-% 1. Build a trusted local reference near the right plateau.
+% 1. Build a trusted local reference near the edge plateau.
 % 2. Reject old points inconsistent with that reference.
 % 3. Extract multi-window candidates and keep only consensus-supported ones.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -26,7 +27,7 @@ ref_lo = ref_hi - ref_span_lo;
 if numel(f_ref) < 3
     out = hybrid_cal;
     if show_summary
-        fprintf('  [right-local ref] insufficient support, skip rebuild\n');
+        fprintf('  [edge-local ref] insufficient support, skip rebuild\n');
     end
     return;
 end
@@ -46,7 +47,7 @@ uplift_model = build_edge_uplift_model(f_ref, tau_ref, fit_ref, ...
     edge_uplift_gain, edge_uplift_power, edge_uplift_cap);
 
 if show_summary
-    fprintf('  [right-local ref] %s, f = %.3f-%.3f GHz, tau = %.2f-%.2f ns, %d pts\n', ...
+    fprintf('  [edge-local ref] %s, f = %.3f-%.3f GHz, tau = %.2f-%.2f ns, %d pts\n', ...
         ref_label, min(f_ref)/1e9, max(f_ref)/1e9, ...
         min(tau_ref)*1e9, max(tau_ref)*1e9, numel(f_ref));
     if uplift_model.enabled
@@ -219,6 +220,8 @@ if show_summary
 end
 end
 
+%% ---- Local functions ----
+
 function [f_ref, tau_ref, ref_label] = build_reference(hybrid_cal, base_cal, ref_lo, ref_hi, ref_min_points)
 [f_ref, tau_ref] = extract_band_points(hybrid_cal, ref_lo, ref_hi);
 ref_label = 'hybrid';
@@ -285,7 +288,6 @@ if gain <= 0
     return;
 end
 
-% 纯数据驱动：仅用右侧参考区数据估计边缘上限
 tau_edge_cap = max(max(tau_ref), uplift_model.tau_edge_local);
 
 delta_edge = max(tau_edge_cap - uplift_model.tau_edge_local, 0);
