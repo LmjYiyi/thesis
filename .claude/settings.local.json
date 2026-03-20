@@ -27,7 +27,8 @@
       "Bash(unzip:*)",
       "Bash(mkdir:*)",
       "Bash(where python:*)",
-      "Bash(do echo:*)"
+      "Bash(do echo:*)",
+      "Bash(cd:*)"
     ]
   }
 }
