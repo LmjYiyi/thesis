@@ -165,10 +165,12 @@ f_indices = find(f >= f_range(1) & f <= f_range(2));
 % Figure 1: 发射信号 vs 空气接收 (合并原 Figure 1 & 2)
 % -------------------------------------------------------------
 figure(1); clf;
-set(gcf, 'Position', [100, 100, 1000, 400]); % 调整宽屏显示
+set(gcf, 'Color', 'w', 'Units', 'centimeters', ...
+    'Position', [2, 2, 16, 7], ...
+    'PaperUnits', 'centimeters', 'PaperPositionMode', 'auto');
 
 % 准备绘图数据
-t_display = min(5e-6, T_m); 
+t_display = min(5e-6, T_m);
 idx_display = round(t_display/t_s);
 S_TX_mag = abs(fft(s_tx));
 S_RX_air_mag = abs(fft(s_rx_air));
@@ -176,22 +178,31 @@ S_RX_air_mag = abs(fft(s_rx_air));
 % 左子图: 时域
 subplot(1, 2, 1);
 plot(t(1:idx_display)*1e6, s_tx(1:idx_display), 'b', t(1:idx_display)*1e6, s_rx_air(1:idx_display), 'r--');
-xlabel('时间 (μs)'); ylabel('幅值'); 
-title('发射信号 vs 空气接收 (时域)'); 
-legend('Tx', 'Rx Air'); grid on;
+xlabel('时间 (μs)'); ylabel('幅值');
+title('发射信号 vs 空气接收 (时域)');
+legend('Tx', 'Rx Air');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
 % 右子图: 频域
 subplot(1, 2, 2);
 plot(f(f_indices)/1e9, S_TX_mag(f_indices), 'b', f(f_indices)/1e9, S_RX_air_mag(f_indices), 'r--');
 xlabel('频率 (GHz)'); ylabel('幅度');
-title('发射 vs 空气接收 (频谱)'); 
-legend('Tx', 'Rx Air'); grid on;
+title('发射 vs 空气接收 (频谱)');
+legend('Tx', 'Rx Air');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
+
+% 导出 Figure 1
+export_thesis_figure(gcf, '图4-1_发射与空气接收', 16);
 
 % -------------------------------------------------------------
 % Figure 2: 发射信号 vs 等离子体接收 (合并原 Figure 3 & 4)
 % -------------------------------------------------------------
 figure(2); clf;
-set(gcf, 'Position', [150, 150, 1000, 400]);
+set(gcf, 'Color', 'w', 'Units', 'centimeters', ...
+    'Position', [2, 2, 16, 7], ...
+    'PaperUnits', 'centimeters', 'PaperPositionMode', 'auto');
 
 % 准备绘图数据
 S_RX_plasma_mag_plot = abs(S_RX_plasma_fft);
@@ -199,16 +210,23 @@ S_RX_plasma_mag_plot = abs(S_RX_plasma_fft);
 % 左子图: 时域 (含噪声)
 subplot(1, 2, 1);
 plot(t(1:idx_display)*1e6, s_tx(1:idx_display), 'b', t(1:idx_display)*1e6, real(s_rx_plasma(1:idx_display)), 'r--');
-xlabel('时间 (μs)'); ylabel('幅值'); 
-title('发射信号 vs 等离子体接收 (含噪)'); 
-legend('Tx', 'Rx Plasma'); grid on;
+xlabel('时间 (μs)'); ylabel('幅值');
+title('发射信号 vs 等离子体接收 (含噪)');
+legend('Tx', 'Rx Plasma');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
 % 右子图: 频域 (含噪声)
 subplot(1, 2, 2);
 plot(f(f_indices)/1e9, S_TX_mag(f_indices), 'b', f(f_indices)/1e9, S_RX_plasma_mag_plot(f_indices), 'r--');
 xlabel('频率 (GHz)'); ylabel('幅度');
-title('发射 vs 等离子体接收 (频谱,含噪)'); 
-legend('Tx', 'Rx Plasma'); grid on;
+title('发射 vs 等离子体接收 (频谱,含噪)');
+legend('Tx', 'Rx Plasma');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
+
+% 导出 Figure 2
+export_thesis_figure(gcf, '图4-2_发射与等离子体接收', 16);
 
 % -------------------------------------------------------------
 % Figure 3: 差频信号分析 (合并原 Figure 5, 6, 7, 8)
@@ -216,48 +234,71 @@ legend('Tx', 'Rx Plasma'); grid on;
 %       上排(时域 5,7), 下排(频域 6,8)
 % -------------------------------------------------------------
 figure(3); clf;
-set(gcf, 'Position', [200, 200, 1000, 700]);
+set(gcf, 'Color', 'w', 'Units', 'centimeters', ...
+    'Position', [2, 2, 14, 11], ...
+    'PaperUnits', 'centimeters', 'PaperPositionMode', 'auto');
 
 % 准备绘图数据
-t_if_disp = min(20e-6, T_m); 
+t_if_disp = min(20e-6, T_m);
 idx_if = round(t_if_disp/t_s);
-f_if_lim = 1e6; 
+f_if_lim = 1e6;
 idx_if_f = round(f_if_lim/(f_s/N));
 
-% 子图 1 (左上): 空气差频 (时域)
+% 子图 1 (左上): 空气差频
 subplot(2, 2, 1);
 plot(t(1:idx_if)*1e6, s_if_air(1:idx_if), 'b');
 xlabel('时间 (μs)'); ylabel('幅值');
-title('空气差频 (时域)'); grid on;
+title('空气差频');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
-% 子图 2 (右上): 等离子体差频 (时域, 含噪)
+% 子图 2 (右上): 等离子体差频
 subplot(2, 2, 2);
 plot(t(1:idx_if)*1e6, s_if_plasma(1:idx_if), 'b');
 xlabel('时间 (μs)'); ylabel('幅值');
-title('等离子体差频 (时域, 含噪)'); grid on;
+title('等离子体差频');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
-% 子图 3 (左下): 空气差频 (频谱)
+% 子图 3 (左下): 空气差频
 subplot(2, 2, 3);
 stem(f(1:idx_if_f)/1e3, S_IF_air_mag(1:idx_if_f), 'b', 'MarkerSize', 2);
-xline(f_beat_air_theory/1e3, 'r--', 'LineWidth', 2);
+hold on;
+xline(f_beat_air_theory/1e3, 'r--', 'LineWidth', 1.5);
 xlabel('频率 (kHz)'); ylabel('幅度');
-title('空气差频 (频谱)'); 
-legend('Sim', 'Theory'); grid on;
+title('空气差频');
+legend('Sim', 'Theory');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
-% 子图 4 (右下): 等离子体差频 (频谱, 含噪)
+% 子图 4 (右下): 等离子体差频
 subplot(2, 2, 4);
 stem(f(1:idx_if_f)/1e3, S_IF_plasma_mag(1:idx_if_f), 'b', 'MarkerSize', 2);
 xlabel('频率 (kHz)'); ylabel('幅度');
-title('等离子体差频 (频谱, 含噪)'); grid on;
+title('等离子体差频');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
-% --- 新增 Figure 9: SNR 可视化对比 ---
-figure(10);
+% 导出 Figure 3
+export_thesis_figure(gcf, '图4-3_差频信号分析', 14);
+
+% --- Figure 10: SNR 可视化对比 ---
+figure(10); clf;
+set(gcf, 'Color', 'w', 'Units', 'centimeters', ...
+    'Position', [2, 2, 14, 7], ...
+    'PaperUnits', 'centimeters', 'PaperPositionMode', 'auto');
+
 plot(t(1:idx_display)*1e6, s_rx_plasma_pure(1:idx_display), 'g', 'LineWidth', 1.5);
 hold on;
 plot(t(1:idx_display)*1e6, s_rx_plasma(1:idx_display), 'b', 'LineWidth', 0.8);
+xlabel('时间 (μs)'); ylabel('幅值');
+title('噪声影响对比');
 legend('纯净信号', sprintf('含噪信号 (SNR=%ddB)', SNR_dB));
-xlabel('时间 (μs)'); ylabel('幅值'); 
-title('Figure 10: 噪声影响对比'); grid on;
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
+
+% 导出 Figure 10
+export_thesis_figure(gcf, '图4-4_SNR噪声对比', 14);
 
 %% 7. 高级信号处理：滑动窗口 + MDL + ESPRIT + 【幅度提取】
 fprintf('开始高级信号处理 (滑动窗口 + ESPRIT + 幅度加权)...\n');
@@ -420,7 +461,9 @@ tau_relative_meas = feature_tau_absolute - tau_air;
 
 % --- 8.3 绘图 ---
 figure(11); clf;
-set(gcf, 'Position', [100, 100, 900, 600]);
+set(gcf, 'Color', 'w', 'Units', 'centimeters', ...
+    'Position', [2, 2, 14, 9], ...
+    'PaperUnits', 'centimeters', 'PaperPositionMode', 'auto');
 
 % 绘制测量点 (蓝色散点)
 % 过滤掉异常的负值或极小值(由ESPRIT在信号边缘失效引起)
@@ -431,21 +474,25 @@ scatter(feature_f_probe(valid_idx)/1e9, tau_relative_meas(valid_idx)*1e9, 20, 'b
 hold on;
 
 % 绘制修正后的理论曲线 (红色实线)
-plot(f_theory_vec/1e9, tau_relative_theory*1e9, 'r', 'LineWidth', 2.5, ...
+plot(f_theory_vec/1e9, tau_relative_theory*1e9, 'r', 'LineWidth', 2.0, ...
     'DisplayName', '全复数Drude模型理论值 (含碰撞)');
 
 grid on;
-xlabel('探测频率 (GHz)', 'FontSize', 12);
-ylabel('相对群时延 \Delta\tau (ns)', 'FontSize', 12);
+xlabel('探测频率 (GHz)');
+ylabel('相对群时延 \Delta\tau (ns)');
 title({['等离子体电子密度诊断结果 (含噪声环境)'], ...
-       ['设定 N_e = ' num2str(n_e, '%.2e') ' m^{-3}, \nu_e = ' num2str(nu/1e9) ' GHz, SNR = ' num2str(SNR_dB) ' dB']}, ...
-       'FontSize', 14);
-legend('Location', 'northeast', 'FontSize', 12);
+       ['设定 N_e = ' num2str(n_e, '%.2e') ' m^{-3}, \nu_e = ' num2str(nu/1e9) ' GHz, SNR = ' num2str(SNR_dB) ' dB']});
+legend('Location', 'northeast');
 xlim([f_start/1e9, f_end/1e9]);
 
 % 自动调整Y轴范围以聚焦数据
 y_max = max(tau_relative_theory*1e9) * 1.2;
 ylim([0, y_max]);
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+
+% 导出 Figure 11
+export_thesis_figure(gcf, '图4-5_等离子体诊断结果', 14);
+
 
 fprintf('绘图完成。\n');
 fprintf('理论时延计算采用相位求导法：tau = -d(phi)/d(omega) - d/c\n');
@@ -622,59 +669,80 @@ end
 
 % Figure 12: Trace plots
 figure(12); clf;
-set(gcf, 'Color', 'w', 'Position', [100 100 1000 600]);
+set(gcf, 'Color', 'w', 'Units', 'centimeters', ...
+    'Position', [2, 2, 14, 10], ...
+    'PaperUnits', 'centimeters', 'PaperPositionMode', 'auto');
 
 subplot(2,2,1);
 plot(samples_ne, 'b', 'LineWidth', 0.5);
 hold on;
-yline(n_e, 'r--', 'LineWidth', 2);
+yline(n_e, 'r--', 'LineWidth', 1.5);
 xline(burn_in, 'k--', 'Burn-in');
 xlabel('迭代次数'); ylabel('n_e (m^{-3})');
-title(sprintf('(a) n_e Trace Plot (SNR=%ddB)', SNR_dB)); grid on;
+title(sprintf('(a) n_e Trace Plot (SNR=%ddB)', SNR_dB));
 legend('采样链', '真值', 'Location', 'best');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
 subplot(2,2,2);
 plot(samples_nu/1e9, 'b', 'LineWidth', 0.5);
 hold on;
-yline(nu/1e9, 'r--', 'LineWidth', 2);
+yline(nu/1e9, 'r--', 'LineWidth', 1.5);
 xline(burn_in, 'k--', 'Burn-in');
 xlabel('迭代次数'); ylabel('\nu_e (GHz)');
-title('(b) \nu_e Trace Plot'); grid on;
+title('(b) \nu_e Trace Plot');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
 subplot(2,2,3);
 histogram(samples_ne_valid, 50, 'Normalization', 'pdf', 'FaceColor', [0.2 0.6 0.8]);
 hold on;
-xline(n_e, 'r--', 'LineWidth', 2);
-xline(ne_ci(1), 'k--'); xline(ne_ci(2), 'k--');
+xline(n_e, 'r--', 'LineWidth', 1.5);
+xline(ne_ci(1), 'k--', 'LineWidth', 1); xline(ne_ci(2), 'k--', 'LineWidth', 1);
 xlabel('n_e (m^{-3})'); ylabel('概率密度');
-title('(c) n_e 后验分布'); grid on;
+title('(c) n_e 后验分布');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
 subplot(2,2,4);
 histogram(samples_nu_valid/1e9, 50, 'Normalization', 'pdf', 'FaceColor', [0.8 0.4 0.2]);
 hold on;
-xline(nu/1e9, 'r--', 'LineWidth', 2);
-xline(nu_ci(1)/1e9, 'k--'); xline(nu_ci(2)/1e9, 'k--');
+xline(nu/1e9, 'r--', 'LineWidth', 1.5);
+xline(nu_ci(1)/1e9, 'k--', 'LineWidth', 1); xline(nu_ci(2)/1e9, 'k--', 'LineWidth', 1);
 xlabel('\nu_e (GHz)'); ylabel('概率密度');
-title('(d) \nu_e 后验分布'); grid on;
+title('(d) \nu_e 后验分布');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
-sgtitle(sprintf('Drude模型 MCMC 参数反演结果 (SNR=%ddB)', SNR_dB), 'FontSize', 14, 'FontWeight', 'bold');
+sgtitle(sprintf('Drude模型 MCMC 参数反演结果 (SNR=%ddB)', SNR_dB), 'FontSize', 12, 'FontWeight', 'bold');
+
+% 导出 Figure 12
+export_thesis_figure(gcf, '图4-6_MCMC_Trace', 14);
 
 % Figure 13: Corner Plot (2D 联合分布)
 figure(13); clf;
-set(gcf, 'Color', 'w', 'Position', [150 150 700 600]);
+set(gcf, 'Color', 'w', 'Units', 'centimeters', ...
+    'Position', [2, 2, 12, 10], ...
+    'PaperUnits', 'centimeters', 'PaperPositionMode', 'auto');
 
 % 主对角线: 边缘分布
 subplot(2,2,1);
 histogram(samples_ne_valid, 40, 'Normalization', 'pdf', 'FaceColor', [0.2 0.6 0.8]);
-xline(n_e, 'r--', 'LineWidth', 2);
+hold on;
+xline(n_e, 'r--', 'LineWidth', 1.5);
 xlabel('n_e (m^{-3})'); ylabel('PDF');
 title('n_e 边缘分布');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
 subplot(2,2,4);
 histogram(samples_nu_valid/1e9, 40, 'Normalization', 'pdf', 'FaceColor', [0.8 0.4 0.2]);
-xline(nu/1e9, 'r--', 'LineWidth', 2);
+hold on;
+xline(nu/1e9, 'r--', 'LineWidth', 1.5);
 xlabel('\nu_e (GHz)'); ylabel('PDF');
 title('\nu_e 边缘分布');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
 % 下三角: 联合分布
 subplot(2,2,3);
@@ -683,29 +751,35 @@ hold on;
 plot(n_e, nu/1e9, 'r+', 'MarkerSize', 15, 'LineWidth', 3);
 xlabel('n_e (m^{-3})'); ylabel('\nu_e (GHz)');
 title('联合后验分布 (Corner Plot)');
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
 grid on;
 
 % 上三角: 相关系数
 subplot(2,2,2);
 corr_val = corrcoef(samples_ne_valid, samples_nu_valid);
 text(0.5, 0.5, sprintf('相关系数\\newline\\rho = %.3f', corr_val(1,2)), ...
-    'HorizontalAlignment', 'center', 'FontSize', 16, 'Interpreter', 'tex');
+    'HorizontalAlignment', 'center', 'FontSize', 14, 'Interpreter', 'tex');
 axis off;
 title('参数耦合分析');
 
-sgtitle(sprintf('Drude模型 Corner Plot: n_e vs \\nu_e (SNR=%ddB)', SNR_dB), 'FontSize', 14, 'FontWeight', 'bold');
+sgtitle(sprintf('Drude模型 Corner Plot: n_e vs \\nu_e (SNR=%ddB)', SNR_dB), 'FontSize', 12, 'FontWeight', 'bold');
+
+% 导出 Figure 13
+export_thesis_figure(gcf, '图4-7_MCMC_Corner', 12);
 
 % Figure 14: 拟合验证
 figure(14); clf;
-set(gcf, 'Color', 'w', 'Position', [200 200 800 400]);
+set(gcf, 'Color', 'w', 'Units', 'centimeters', ...
+    'Position', [2, 2, 14, 7], ...
+    'PaperUnits', 'centimeters', 'PaperPositionMode', 'auto');
 
-scatter(X_fit/1e9, Y_fit*1e9, 30, Weights, 'filled'); 
-colorbar; ylabel(colorbar, '权重');
+scatter(X_fit/1e9, Y_fit*1e9, 30, Weights, 'filled');
+cb = colorbar; ylabel(cb, '权重');
 hold on;
 
 f_plot = linspace(min(X_fit), max(X_fit), 200);
 tau_plot = calculate_theoretical_delay(f_plot, ne_mean, nu_mean, d, c, epsilon_0, m_e, e);
-plot(f_plot/1e9, tau_plot*1e9, 'r', 'LineWidth', 2.5);
+plot(f_plot/1e9, tau_plot*1e9, 'r', 'LineWidth', 2.0);
 
 % 95% 置信带 (采样多条曲线)
 n_curves = 100;
@@ -717,14 +791,19 @@ for k = 1:length(idx_sample)
 end
 
 % 重新绘制均值曲线在最上层
-plot(f_plot/1e9, tau_plot*1e9, 'r', 'LineWidth', 2.5);
+plot(f_plot/1e9, tau_plot*1e9, 'r', 'LineWidth', 2.0);
 
-title(sprintf('MCMC拟合结果 (n_e误差: %.2f%%, SNR=%ddB)', (ne_mean - n_e)/n_e * 100, SNR_dB)); 
-xlabel('频率 (GHz)'); ylabel('相对时延 (ns)'); grid on;
+title(sprintf('MCMC拟合结果 (n_e误差: %.2f%%, SNR=%ddB)', (ne_mean - n_e)/n_e * 100, SNR_dB));
+xlabel('频率 (GHz)'); ylabel('相对时延 (ns)');
 legend('测量数据', '后验均值曲线', '95%置信带 (灰)', 'Location', 'best');
 xlim([min(X_fit)/1e9 max(X_fit)/1e9]);
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25);
+grid on;
 
-fprintf('\n绘图完成: Figure 11 (Trace), Figure 12 (Corner), Figure 13 (Fit)\n');
+% 导出 Figure 14
+export_thesis_figure(gcf, '图4-8_MCMC_拟合验证', 14);
+
+fprintf('\n绘图完成: Figure 11-14 已格式化并导出\n');
 
 % =========================================================================
 %  局部函数
@@ -795,4 +874,53 @@ function tau_rel = calculate_theoretical_delay(f_vec, ne_val, nu_val, d, c, eps0
     % 减去真空穿过同样厚度 d 的时延 d/c
     % 得到的就是 "等离子体引起的附加时延"
     tau_rel = tau_total - (d/c);
+end
+
+% =========================================================================
+%  图形导出函数 (论文标准格式)
+% =========================================================================
+function export_thesis_figure(fig_handle, out_name, width_cm, dpi)
+% 标准化论文图形并导出 TIFF/EMF 格式
+
+if nargin < 1 || isempty(fig_handle), fig_handle = gcf; end
+if nargin < 2 || isempty(out_name), out_name = 'figure_export'; end
+if nargin < 3 || isempty(width_cm), width_cm = 14; end
+if nargin < 4 || isempty(dpi), dpi = 600; end
+
+height_cm = width_cm * 0.65;
+
+out_dir = fullfile(pwd, 'figures_export');
+if ~exist(out_dir, 'dir')
+    mkdir(out_dir);
+end
+
+set(fig_handle, ...
+    'Color', 'w', ...
+    'Units', 'centimeters', ...
+    'Position', [2, 2, width_cm, height_cm], ...
+    'PaperUnits', 'centimeters', ...
+    'PaperPositionMode', 'auto', ...
+    'PaperSize', [width_cm, height_cm]);
+
+% 隐藏 sgtitle
+title_nodes = [ ...
+    findall(fig_handle, 'Type', 'Text', 'Tag', 'suptitle'); ...
+    findall(fig_handle, 'Type', 'Text', 'Tag', 'sgtitle') ...
+];
+if ~isempty(title_nodes)
+    set(title_nodes, 'Visible', 'off');
+end
+
+% 导出 TIFF
+file_tiff = fullfile(out_dir, [out_name, '.tiff']);
+file_emf = fullfile(out_dir, [out_name, '.emf']);
+exportgraphics(fig_handle, file_tiff, 'Resolution', dpi, 'BackgroundColor', 'white');
+try
+    exportgraphics(fig_handle, file_emf, 'ContentType', 'vector', 'BackgroundColor', 'white');
+catch
+    warning('EMF export failed on current platform.');
+end
+
+fprintf('[export] %s\n', file_tiff);
+fprintf('[export] %s\n', file_emf);
 end

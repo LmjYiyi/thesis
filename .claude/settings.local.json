@@ -25,7 +25,9 @@
       "Bash(copy:*)",
       "Bash(python3:*)",
       "Bash(unzip:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(where python:*)",
+      "Bash(do echo:*)"
     ]
   }
 }

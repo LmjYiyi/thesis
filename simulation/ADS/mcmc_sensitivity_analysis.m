@@ -19,7 +19,7 @@ fprintf('  基准状态: F0=%.1fGHz, BW=%.1fGHz, N=%d\n', F0_base/1e9, BW_base/1
 fprintf('======================================================\n');
 
 %% 2. 构建三维敏感度对比图阵列
-figure('Color', 'w', 'Position', [100, 100, 1400, 450]);
+fig_h = figure('Color', 'w', 'Position', [100, 100, 1400, 450]);
 
 % ------------------------------------------------------------------------
 % Subplot (a): 对中心频率 F0 的敏感度演变
@@ -32,14 +32,14 @@ labels_F0 = {};
 
 for idx = 1:length(F0_vars)
     tau = calculate_chebyshev_group_delay(f_axis, F0_vars(idx), BW_base, N_base, Ripple);
-    plot(f_axis/1e9, tau*1e9, 'LineWidth', 2, 'Color', colors_F0{idx});
+    plot(f_axis/1e9, tau*1e9, 'LineWidth', 1.5, 'Color', colors_F0{idx});
     labels_F0{end+1} = sprintf('F_0 = %.1f GHz', F0_vars(idx)/1e9);
 end
-legend(labels_F0, 'Location', 'northeast', 'FontSize', 10);
+legend(labels_F0, 'Location', 'north', 'FontSize', 9, 'NumColumns', 3, 'Box', 'off');
 xlabel('探测频率 (GHz)', 'FontSize', 11, 'FontWeight', 'bold');
 ylabel('解析群延迟 \tau (ns)', 'FontSize', 11, 'FontWeight', 'bold');
-title('(a) 中心频率 F_0 漂移敏感度规律', 'FontSize', 13);
-set(gca, 'GridAlpha', 0.3); xlim([35.5, 38.5]); ylim([0, 8]);
+title('(a)', 'FontSize', 12);
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25); xlim([35.5, 38.5]); ylim([0, 8]);
 
 % ------------------------------------------------------------------------
 % Subplot (b): 对绝对带宽 BW 的敏感度演变
@@ -52,14 +52,14 @@ labels_BW = {};
 
 for idx = 1:length(BW_vars)
     tau = calculate_chebyshev_group_delay(f_axis, F0_base, BW_vars(idx), N_base, Ripple);
-    plot(f_axis/1e9, tau*1e9, 'LineWidth', 2, 'Color', colors_BW{idx});
+    plot(f_axis/1e9, tau*1e9, 'LineWidth', 1.5, 'Color', colors_BW{idx});
     labels_BW{end+1} = sprintf('BW = %.1f GHz', BW_vars(idx)/1e9);
 end
-legend(labels_BW, 'Location', 'northeast', 'FontSize', 10);
+legend(labels_BW, 'Location', 'north', 'FontSize', 9, 'NumColumns', 3, 'Box', 'off');
 xlabel('探测频率 (GHz)', 'FontSize', 11, 'FontWeight', 'bold');
 % ylabel('解析群延迟 \tau (ns)', 'FontSize', 11, 'FontWeight', 'bold');
-title('(b) 绝对带宽 BW 扩张敏感度规律', 'FontSize', 13);
-set(gca, 'GridAlpha', 0.3); xlim([35.5, 38.5]); ylim([0, 8]);
+title('(b)', 'FontSize', 12);
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25); xlim([35.5, 38.5]); ylim([0, 8]);
 
 % ------------------------------------------------------------------------
 % Subplot (c): 对滤波器等效阶数 N 的敏感度演变
@@ -72,16 +72,17 @@ labels_N = {};
 
 for idx = 1:length(N_vars)
     tau = calculate_chebyshev_group_delay(f_axis, F0_base, BW_base, N_vars(idx), Ripple);
-    plot(f_axis/1e9, tau*1e9, 'LineWidth', 2, 'Color', colors_N{idx});
+    plot(f_axis/1e9, tau*1e9, 'LineWidth', 1.5, 'Color', colors_N{idx});
     labels_N{end+1} = sprintf('阶数 N = %d', N_vars(idx));
 end
-legend(labels_N, 'Location', 'northeast', 'FontSize', 10);
+legend(labels_N, 'Location', 'north', 'FontSize', 9, 'NumColumns', 3, 'Box', 'off');
 xlabel('探测频率 (GHz)', 'FontSize', 11, 'FontWeight', 'bold');
 % ylabel('解析群延迟 \tau (ns)', 'FontSize', 11, 'FontWeight', 'bold');
-title('(c) 谐振腔等效阶数 N 敏感度规律', 'FontSize', 13);
-set(gca, 'GridAlpha', 0.3); xlim([35.5, 38.5]); ylim([0, 8]);
+title('(c)', 'FontSize', 12);
+set(gca, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', 'TickDir', 'in', 'XGrid', 'on', 'YGrid', 'on', 'GridAlpha', 0.25); xlim([35.5, 38.5]); ylim([0, 8]);
 
-sgtitle('图 5.X  LFMCW 前向物理模型：色散介质群时延双峰特征的独立维度参数敏感度剖析', 'FontSize', 15, 'FontWeight', 'bold');
+% Export figure
+export_thesis_figure(fig_h, '图5-敏感度分析', 14, 600);
 
 disp('所有敏感度曲线绘制完成。');
 
@@ -112,4 +113,45 @@ function tau_g = calculate_chebyshev_group_delay(f_vec, F0, BW, N, Ripple)
     catch
         tau_g = zeros(size(f_vec));
     end
+end
+
+%% ================= 论文图像导出函数 =================
+function export_thesis_figure(fig_handle, out_name, width_cm, dpi)
+% 简化版导出函数：保持原有字体渲染，仅格式化布局
+if nargin < 1 || isempty(fig_handle), fig_handle = gcf; end
+if nargin < 2 || isempty(out_name), out_name = 'figure_export'; end
+if nargin < 3 || isempty(width_cm), width_cm = 14; end
+if nargin < 4 || isempty(dpi), dpi = 600; end
+
+height_cm = width_cm * 0.65;
+out_dir = fullfile(pwd, 'figures_export');
+if ~exist(out_dir, 'dir'), mkdir(out_dir); end
+
+set(fig_handle, ...
+    'Color', 'w', ...
+    'Units', 'centimeters', ...
+    'Position', [2, 2, width_cm, height_cm], ...
+    'PaperUnits', 'centimeters', ...
+    'PaperPositionMode', 'auto', ...
+    'PaperSize', [width_cm, height_cm]);
+
+% 隐藏 sgtitle
+title_nodes = [ ...
+    findall(fig_handle, 'Type', 'Text', 'Tag', 'suptitle'); ...
+    findall(fig_handle, 'Type', 'Text', 'Tag', 'sgtitle') ...
+];
+if ~isempty(title_nodes)
+    set(title_nodes, 'Visible', 'off');
+end
+
+file_tiff = fullfile(out_dir, [out_name, '.tiff']);
+file_emf = fullfile(out_dir, [out_name, '.emf']);
+exportgraphics(fig_handle, file_tiff, 'Resolution', dpi, 'BackgroundColor', 'white');
+try
+    exportgraphics(fig_handle, file_emf, 'ContentType', 'vector', 'BackgroundColor', 'white');
+catch
+    warning('EMF export failed on current platform.');
+end
+fprintf('[export] %s\n', file_tiff);
+fprintf('[export] %s\n', file_emf);
 end

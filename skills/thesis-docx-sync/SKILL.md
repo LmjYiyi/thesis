@@ -54,9 +54,20 @@ python skills/thesis-docx-sync/scripts/sync_markdown_to_docx.py ^
   --output path/to/master_synced.docx
 ```
 
-8. If the output path already exists, make sure Word is not keeping that file open. Otherwise write to a new filename first.
-9. Open the output in Word and refresh the table of contents, figure index, and table index if needed.
-10. Visually inspect formulas, tables, footnotes, hyperlinks, and chapter breaks.
+8. **After syncing all chapters**, run the mandatory style post-processor to fix pandoc-generated styles and image formatting. This step is **required** — without it, body text will use wrong styles and images will be clipped to a single line:
+
+```bash
+python skills/thesis-docx-sync/scripts/postprocess_styles.py ^
+  --docx path/to/master_synced.docx ^
+  --in-place
+```
+
+9. If the output path already exists, make sure Word is not keeping that file open. Otherwise write to a new filename first.
+10. Open the output in Word and refresh the table of contents, figure index, and table index if needed.
+11. Visually inspect formulas, tables, footnotes, hyperlinks, and chapter breaks.
+12. Clean up temporary files:
+    - Delete any temporary outline dump files (e.g., `temp_outline.txt`) created during the workflow
+    - Delete auto-generated backup files created by `postprocess_styles.py` (e.g., `*.bak-*` files)
 
 ## Rules
 
@@ -86,6 +97,13 @@ python skills/thesis-docx-sync/scripts/sync_markdown_to_docx.py ^
 - Keep tracked changes, comments, and embedded OLE objects out of the Markdown fragment.
 - Do not assume equation numbers will land in exactly the same visual position as a hand-crafted Word equation template; verify the layout after sync.
 - If the user asks to modify a legacy `.doc`, convert it to `.docx` first instead of attempting direct `.doc` editing.
+- **IMPORTANT: `postprocess_styles.py` is mandatory after every sync.** pandoc generates non-standard styles that do not match the thesis template. Without post-processing:
+  - Body text uses `Body Text` / `FirstParagraph` / `Compact` instead of `Normal`（正文）.
+  - Figure captions use `ImageCaption` instead of `标题-图`（style ID `-0`）.
+  - Figure container paragraphs use `CaptionedFigure` instead of unstyled Normal.
+  - Image paragraphs inherit the template's fixed line height, causing images to be clipped to a single visible line. The post-processor sets `spacing line="240" lineRule="auto"` (single spacing, auto height) and `jc center` to match the reference document.
+- When syncing multiple chapters in sequence, sync ALL chapters first, then run `postprocess_styles.py` **once** on the final output. Running it per-chapter is also fine but unnecessary.
+- The `--level` CLI argument for `sync_markdown_to_docx.py` only accepts values 1–9. For level-0 headings (e.g., `摘要`, `ABSTRACT` with `标题-无编号` style), **omit** the `--level` flag entirely — the heading text alone is sufficient for unique matching.
 
 ## Commands
 
@@ -137,6 +155,22 @@ python skills/thesis-docx-sync/scripts/sync_markdown_to_docx.py ^
   --in-place
 ```
 
+- Post-process styles after sync (mandatory):
+
+```bash
+python skills/thesis-docx-sync/scripts/postprocess_styles.py ^
+  --docx path/to/synced.docx ^
+  --in-place
+```
+
+- Post-process to a new output file:
+
+```bash
+python skills/thesis-docx-sync/scripts/postprocess_styles.py ^
+  --docx path/to/synced.docx ^
+  --output path/to/synced_fixed.docx
+```
+
 ## Resources
 
 - Use `scripts/dump_docx_outline.py` to discover stable anchors before any edit.
@@ -144,6 +178,7 @@ python skills/thesis-docx-sync/scripts/sync_markdown_to_docx.py ^
 - Use `scripts/preflight_markdown_sync.py` to catch off-policy image paths and inline-math readability risks before rendering.
 - Use `scripts/sync_markdown_to_docx.py` for section replacement.
 - Use `scripts/docx_figure_catalog.py` to inspect which figure numbers a source DOCX can provide before relying on DOCX-backed image fallback.
+- Use `scripts/postprocess_styles.py` **after every sync** to remap pandoc-generated styles (`Body Text` → `Normal`, `ImageCaption` → `标题-图`) and fix image paragraph formatting (auto line spacing + center alignment). Without this step images will be clipped.
 - Read `references/workflow.md` when the user needs scope, constraints, or failure handling.
 
 ## Decision Notes
@@ -152,7 +187,7 @@ python skills/thesis-docx-sync/scripts/sync_markdown_to_docx.py ^
 - The Chinese abstract (`摘要_中文.md`) and English abstract (`摘要_英文.md`) MUST be stored as separate Markdown files.
 - Each abstract file must contain ONLY ONE top-level heading (`# 摘要` or `# ABSTRACT`).
 - NEVER combine both abstracts in a single file (e.g., `摘要_中英文.md`) — this will cause heading conflicts during sync and result in duplicate "Abstract" entries in the Word document.
-- When syncing abstracts, use `--level 0` to match non-numbered headings (level 0 in the Word template).
+- When syncing abstracts, **omit** the `--level` flag (the CLI does not accept `--level 0`). The heading text `摘要` or `ABSTRACT` is unique enough for matching.
 - Sync order: Chinese abstract first, then English abstract.
 
 - If the requested fragment contains images or Word-only objects that are not ordinary Markdown images, split the task: sync text automatically, then place those objects manually in Word.
@@ -168,3 +203,26 @@ python skills/thesis-docx-sync/scripts/sync_markdown_to_docx.py ^
 **IMPORTANT: Chapter title matching.**
 - When merging multiple Markdown files into one chapter, use the FULL chapter title (e.g., "第三章 宽带信号在色散介质中的传播机理与方法失效分析") as the `--title` parameter, NOT just "第3章".
 - The merged file's first heading must match the Word template's existing chapter heading text (e.g., match "诊断系统硬件设计" instead of expecting "第3章" to automatically replace it).
+
+**IMPORTANT: Pandoc style mismatch — postprocess_styles.py is mandatory.**
+- pandoc renders Markdown body text as `Body Text` (`a8`), `FirstParagraph`, or `Compact` styles, **not** the template's `Normal`（正文）style. These must be remapped.
+- pandoc renders figure captions as `ImageCaption` and figure containers as `CaptionedFigure`, **not** the template's `标题-图` (`-0`) style.
+- pandoc does NOT set image-paragraph line spacing. The thesis template's `Normal` style typically uses a fixed line height (e.g., 22pt exact), which clips inline images to a single visible line. `postprocess_styles.py` explicitly sets `spacing line="240" lineRule="auto"` + `jc center` on all image paragraphs.
+- Style remapping table:
+
+| pandoc generates | postprocess remaps to | Notes |
+|---|---|---|
+| `Body Text` (a8) | Normal（正文） | Remove pStyle tag |
+| `FirstParagraph` | Normal（正文） | Remove pStyle tag |
+| `Compact` | Normal（正文） | Remove pStyle tag |
+| `CaptionedFigure` | Normal（正文） | Image container paragraph |
+| `Figure` | Normal（正文） | Rare |
+| `ImageCaption` | `标题-图` (-0) | Figure caption text |
+
+**IMPORTANT: Full multi-chapter sync workflow.**
+When syncing all chapters at once, follow this order:
+1. Copy the master `.docx` to a working copy (never overwrite the master directly).
+2. Sync abstracts: Chinese (`--match-heading "摘要"`, no `--level`) → English (`--match-heading "ABSTRACT"`, no `--level`).
+3. Sync chapters 1–6 sequentially, each with `--in-place` on the working copy. Use `--match-heading` with the **exact heading text from the Word outline**, not the Markdown heading.
+4. Run `postprocess_styles.py --in-place` once on the final working copy.
+5. Open in Word, refresh TOC / figure index / table index, inspect images.
