@@ -1,8 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 实测时域数据时延轨迹提取（滑动窗口 MDL-ESPRIT）
-% 输入: ex/lowpassfilter_filter.csv (有滤波器, 已100MHz低通, 示波器采集)
-% LFMCW 参数: 34–37 GHz, T_m = 50 μs
-% 流程: 周期叠加平均 → 降采样 → 滑动窗口 ESPRIT → 时延轨迹
+% 实测时延轨迹提取（基线版：固定窗口粗提取 + 双锚点校准）
+% 无右侧边缘重建，仅做滑动窗口 MDL-ESPRIT + 后处理。
+% 依赖文件：esprit_extract.m, trajectory_postprocess.m
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clc; clear; close all;
 
@@ -16,7 +15,7 @@ B       = f_end - f_start;   % 3 GHz
 T_m     = 50e-6;              % 扫频周期 50 μs
 K       = B / T_m;            % 6e13 Hz/s
 
-fprintf('===== 实测时延轨迹提取 =====\n');
+fprintf('===== 实测时延轨迹提取（基线版） =====\n');
 fprintf('LFMCW: %.0f–%.0f GHz, B=%.1f GHz, T_m=%.0f μs, K=%.2e Hz/s\n', ...
     f_start/1e9, f_end/1e9, B/1e9, T_m*1e6, K);
 
@@ -294,12 +293,12 @@ hold off;
 grid on;
 xlabel('瞬时探测频率 (GHz)', 'FontSize', 12, 'FontWeight', 'bold');
 ylabel('群时延 \tau (ns)', 'FontSize', 12, 'FontWeight', 'bold');
-title('实测 LFMCW 时延轨迹', 'FontSize', 14);
+title('实测 LFMCW 时延轨迹（基线版）', 'FontSize', 14);
 set(gca, 'FontName', 'SimHei', 'FontSize', 11, 'GridAlpha', 0.3);
 xlim([36.0, 38.0]);   % 滤波器通带 36.5–37.5 GHz, 留余量
 legend({'ESPRIT 散点'}, 'Location', 'northeast', 'FontSize', 11);
 
-export_thesis_figure(gcf, 'exp_delay_trajectory', 14, 300);
+export_thesis_figure(gcf, 'exp_delay_trajectory_baseline', 14, 300);
 
 fprintf('\n频率轴已根据滤波器通带 %.1f–%.1f GHz 完成双锚点校准。\n', f_edge_lo/1e9, f_edge_hi/1e9);
 

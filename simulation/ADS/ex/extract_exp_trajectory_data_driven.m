@@ -1,5 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 实测时延轨迹提取（无镜像版）
+% 实测时延轨迹提取（纯数据驱动版）
+% 右侧边缘重建完全基于局部连续性与多窗口共识，不使用任何镜像先验。
 % 依赖文件：esprit_extract.m, trajectory_postprocess.m, rebuild_right_edge_local.m
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clc; clear; close all;
@@ -16,7 +17,7 @@ B       = f_end - f_start;
 T_m     = 50e-6;
 K       = B / T_m;
 
-fprintf('===== 实测时延轨迹提取（无镜像版） =====\n');
+fprintf('===== 实测时延轨迹提取（纯数据驱动版） =====\n');
 fprintf('LFMCW: %.0f-%.0f GHz, B=%.1f GHz, T_m=%.0f us, K=%.2e Hz/s\n', ...
     f_start/1e9, f_end/1e9, B/1e9, T_m*1e6, K);
 
@@ -52,6 +53,9 @@ fs_proc = fs / ds;
 f_hp_cut = 10e3;
 [b_hp, a_hp] = butter(2, f_hp_cut / (fs_proc / 2), 'high');
 v_proc = filtfilt(b_hp, a_hp, v_ds);
+f_refine_lp = 0.80e6;
+[b_refine, a_refine] = butter(4, f_refine_lp / (fs_proc / 2), 'low');
+v_proc_refine = filtfilt(b_refine, a_refine, v_proc);
 t_proc = (0:length(v_proc)-1).' / fs_proc;
 rms_thr = max(abs(v_proc)) * 0.01;
 
@@ -85,10 +89,18 @@ cfg_refine.win_lens      = [130, 100, 80];
 cfg_refine.L_sub_ratios  = [1/2, 1/3, 2/5];
 cfg_refine.step_len      = 3;
 cfg_refine.min_freq_gap  = 0.003e9;
-cfg_refine.tau_tol_lo    = 0.40e-9;
-cfg_refine.tau_tol_hi    = 0.30e-9;
+cfg_refine.group_freq_gap = 0.004e9;
+cfg_refine.ref_span_lo    = 0.24e9;
+cfg_refine.ref_span_hi    = 0.00e9;
+cfg_refine.ref_min_points = 5;
+cfg_refine.consensus_min  = 2;
+cfg_refine.edge_uplift_gain = 0.95;
+cfg_refine.edge_uplift_power = 0.85;
+cfg_refine.edge_uplift_cap = 0.28e-9;
+cfg_refine.tau_tol_lo    = 0.32e-9;
+cfg_refine.tau_tol_hi    = 0.36e-9;
 cfg_refine.purge_band_lo = 37.30e9;
-cfg_refine.purge_tol     = 0.50e-9;
+cfg_refine.purge_tol     = 0.36e-9;
 cfg_refine.name          = '右侧局部连续性重建';
 
 f_valid_lo = 20e3;
@@ -100,7 +112,7 @@ base_raw = esp.run_fixed(v_proc, t_proc, fs_proc, f_start, K, ...
     rms_thr, cfg_base, f_valid_lo, f_beat_max, true);
 
 base_clean = pp.clean(base_raw, true, cfg_base.name);
-base_cal   = calibrate_frequency_axis_right_only(base_clean, K, true, cfg_base.name);
+base_cal   = pp.calibrate(base_clean, K, true, cfg_base.name);
 
 %% 7. 自适应分窗
 fprintf('\n【步骤2】自适应分窗...\n');
@@ -116,12 +128,12 @@ hybrid_cal = pp.fuse(base_cal, adapt_clean, cfg_hybrid, true);
 %% 9. 右侧局部连续性重建
 if cfg_refine.enable
     fprintf('\n【步骤4】右侧局部连续性重建...\n');
-    hybrid_cal = rebuild_right_edge_local(hybrid_cal, v_proc, t_proc, fs_proc, ...
+    hybrid_cal = rebuild_right_edge_local(hybrid_cal, v_proc_refine, t_proc, fs_proc, ...
         f_start, K, rms_thr, base_cal, cfg_refine, f_valid_lo, f_beat_max, true);
 end
 
 %% 10. 汇总输出
-fprintf('\n===== 结果汇总（无镜像版） =====\n');
+fprintf('\n===== 结果汇总（纯数据驱动版） =====\n');
 fprintf('  固定窗口: %d 点, 自适应: %d 点, 最终: %d 点\n', ...
     numel(base_cal.f_probe), numel(adapt_clean.f_probe), numel(hybrid_cal.f_probe));
 fprintf('  频率: %.3f - %.3f GHz\n', ...
@@ -147,10 +159,16 @@ if any(mask_seg)
     fprintf('  37.30-37.50 GHz 段: %d 点, 中位数 %.2f ns, 最大 %.2f ns\n', ...
         sum(mask_seg), median(hybrid_cal.tau(mask_seg))*1e9, max(hybrid_cal.tau(mask_seg))*1e9);
 end
+print_delay_shape_diagnostics(hybrid_cal, 'data_driven');
 
 %% 11. 绘图
 figure('Color', 'w', 'Position', [100, 100, 960, 540]);
 hold on;
+
+likely_curve = likely_filter_delay_curve(hybrid_cal, script_dir);
+fprintf('\n[likely filter curve] passband %.2f-%.2f GHz, tau_mid=%.2f ns, tau_peak=%.2f ns\n', ...
+    min(likely_curve.f_ghz), max(likely_curve.f_ghz), ...
+    likely_curve.tau_floor_ns, likely_curve.tau_peak_ns);
 
 scatter(base_cal.f_probe / 1e9, base_cal.tau * 1e9, 28, ...
     [0.80 0.80 0.80], 'filled', ...
@@ -175,6 +193,9 @@ h_dense = scatter(hybrid_cal.f_probe(mask_dense) / 1e9, ...
     [0.18 0.62 0.38], 'filled', ...
     'MarkerFaceAlpha', 0.96, 'MarkerEdgeColor', [0.08 0.08 0.08], ...
     'LineWidth', 0.4);
+h_likely = plot(likely_curve.f_ghz, likely_curve.tau_ns, '-', ...
+    'Color', [0.78 0.12 0.12], 'LineWidth', 2.2);
+set(get(get(h_likely, 'Annotation'), 'LegendInformation'), 'IconDisplayStyle', 'off');
 
 xline(cfg_hybrid.f_flat_lo / 1e9, '--', 'Color', [0.35 0.35 0.35], 'LineWidth', 1.0);
 xline(cfg_hybrid.f_flat_hi / 1e9, '--', 'Color', [0.35 0.35 0.35], 'LineWidth', 1.0);
@@ -183,92 +204,66 @@ hold off;
 grid on;
 xlabel('瞬时探测频率 (GHz)', 'FontSize', 12, 'FontWeight', 'bold');
 ylabel('群时延 \tau (ns)', 'FontSize', 12, 'FontWeight', 'bold');
-title('实测 LFMCW 时延轨迹（无镜像版）', 'FontSize', 14);
+title('实测 LFMCW 时延轨迹（纯数据驱动版）', 'FontSize', 14);
 set(gca, 'FontName', 'SimHei', 'FontSize', 11, 'GridAlpha', 0.25);
 xlim([36.45, 37.55]);
 legend([h_base, h_adapt, h_dense], ...
     {'边缘区固定窗口', '中段自适应窗口', '右侧局部连续性重建'}, ...
     'Location', 'northeast', 'FontSize', 11);
 
-export_thesis_figure(gcf, 'exp_delay_trajectory_no_mirror', 14, 300);
-fprintf('\n频率轴已根据纯右半边数据驱动锚点完成工程校准。\n');
+export_thesis_figure(gcf, 'exp_delay_trajectory_data_driven', 14, 300);
+fprintf('\n频率轴已根据纯数据驱动锚点完成工程校准。\n');
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Local function
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function out = calibrate_frequency_axis_right_only(in, K, show_summary, tag_name)
-if numel(in.f_probe) < 6
-    error('%s 清洗后散点过少，无法校准。', tag_name);
-end
-
-f_edge_lo = 36.5e9;
-f_edge_hi = 37.5e9;
-BW = f_edge_hi - f_edge_lo;
+function print_delay_shape_diagnostics(in, tag_name)
+fprintf('\n===== Shape Diagnostics (%s) =====\n', tag_name);
 
 [f_s, si] = sort(in.f_probe);
 tau_s = in.tau(si);
-amp_s = in.amp(si);
-win_s = in.win_len(si);
 
-N_half = round(numel(f_s) / 2);
+fprintf('  idx   f_probe(GHz)   tau(ns)   region           source\n');
+for i = 1:numel(f_s)
+    tau_ns = tau_s(i) * 1e9;
+    region_name = classify_region(f_s(i));
+    source_name = decode_source(in, si(i));
+    fprintf('  %3d   %10.3f   %7.3f   %-14s %-8s\n', ...
+        i, f_s(i)/1e9, tau_ns, region_name, source_name);
+end
+end
 
-tau_left_sm = movmean(tau_s(1:N_half), max(3, round(N_half/5)));
-[~, idx_lo] = max(tau_left_sm);
-f_anchor_lo = f_s(idx_lo);
-tau_anchor_lo = tau_s(idx_lo);
-
-f_right = f_s(N_half+1:end);
-tau_right = tau_s(N_half+1:end);
-sp = max(3, round(numel(tau_right)/4));
-tau_right_sm = movmean(tau_right, sp);
-tau_right_dev = abs(tau_right - tau_right_sm);
-dev_thr = max(2 * 1.4826 * median(tau_right_dev), 0.15e-9);
-score = normalize01(tau_right_sm) + 0.40 * normalize01(f_right) - 0.35 * normalize01(tau_right_dev);
-score(tau_right_dev > dev_thr) = -inf;
-
-if all(~isfinite(score))
-    [~, idx_hi_rel] = max(tau_right_sm);
+function region_name = classify_region(f_val)
+if f_val < 36.62e9
+    region_name = 'left_edge';
+elseif f_val < 36.78e9
+    region_name = 'left_shoulder';
+elseif f_val <= 37.22e9
+    region_name = 'flat_mid';
+elseif f_val < 37.38e9
+    region_name = 'right_shoulder';
 else
-    [~, idx_hi_rel] = max(score);
-end
-f_anchor_hi = f_right(idx_hi_rel);
-tau_anchor_hi = tau_right(idx_hi_rel);
-
-a_cal = BW / (f_anchor_hi - f_anchor_lo);
-b_cal = f_edge_lo - a_cal * f_anchor_lo;
-
-out.f_probe = a_cal * f_s + b_cal;
-out.tau = tau_s;
-out.amp = amp_s;
-out.win_len = win_s;
-out.a_cal = a_cal;
-out.b_cal = b_cal;
-out.f_anchor_lo = f_anchor_lo;
-out.f_anchor_hi = f_anchor_hi;
-
-if show_summary
-    fprintf('  %s 校准: 左锚点 %.3f GHz (tau=%.2f ns) -> 36.5 GHz\n', ...
-        tag_name, f_anchor_lo/1e9, tau_anchor_lo*1e9);
-    fprintf('  %s 校准: 右锚点(纯右半边) %.3f GHz (tau=%.2f ns) -> 37.5 GHz\n', ...
-        tag_name, f_anchor_hi/1e9, tau_anchor_hi*1e9);
-    fprintf('  %s 校准系数: a=%.4f, b=%.3f GHz, 有效K=%.2e Hz/s\n', ...
-        tag_name, a_cal, b_cal/1e9, K*a_cal);
-    fprintf('  %s 最终范围: f = %.2f-%.2f GHz, tau = %.2f-%.2f ns\n', ...
-        tag_name, min(out.f_probe)/1e9, max(out.f_probe)/1e9, ...
-        min(out.tau)*1e9, max(out.tau)*1e9);
+    region_name = 'right_edge';
 end
 end
 
-function y = normalize01(x)
-x = x(:);
-x_min = min(x);
-x_max = max(x);
-if x_max <= x_min
-    y = zeros(size(x));
-else
-    y = (x - x_min) / (x_max - x_min);
+function source_name = decode_source(in, idx)
+source_name = 'n/a';
+if ~isfield(in, 'source_code')
+    return;
+end
+
+switch in.source_code(idx)
+    case 1
+        source_name = 'base';
+    case 2
+        source_name = 'adapt';
+    case 3
+        source_name = 'rebuild';
+    otherwise
+        source_name = 'unknown';
 end
 end
 
