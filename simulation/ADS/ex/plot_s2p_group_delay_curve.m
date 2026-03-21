@@ -52,6 +52,9 @@ fprintf('中位群时延    : %.4f ns\n', tau_mid_ns);
 fprintf('峰值群时延    : %.4f ns @ %.4f GHz\n', tau_peak_ns, f_view(idx_peak) / 1e9);
 fprintf('===========================================\n');
 
+%% 4. 导出论文插图
+export_thesis_figure(gcf, 's2p_group_delay_curve', 14, 300);
+
 function [f_hz, tau_s] = read_s21_group_delay_from_s2p(s2p_file)
 fid = fopen(s2p_file, 'r');
 if fid < 0
@@ -136,4 +139,54 @@ tau_s = -gradient(phase_rad, f_hz) / (2 * pi);
 mask_ok = isfinite(f_hz) & isfinite(tau_s);
 f_hz = f_hz(mask_ok);
 tau_s = tau_s(mask_ok);
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 本地函数：统一论文插图风格并自动导出
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function export_thesis_figure(fig_handle, out_name, width_cm, dpi)
+if nargin < 1 || isempty(fig_handle), fig_handle = gcf; end
+if nargin < 2 || isempty(out_name), out_name = 'figure_export'; end
+if nargin < 3 || isempty(width_cm), width_cm = 14; end
+if nargin < 4 || isempty(dpi), dpi = 300; end
+
+height_cm = width_cm * 0.618;
+out_dir = fullfile(fileparts(mfilename('fullpath')), '..', 'figures_export');
+if ~exist(out_dir, 'dir')
+    mkdir(out_dir);
+end
+
+set(fig_handle, ...
+    'Color', 'w', ...
+    'Units', 'centimeters', ...
+    'Position', [2, 2, width_cm, height_cm], ...
+    'PaperUnits', 'centimeters', ...
+    'PaperPosition', [0, 0, width_cm, height_cm], ...
+    'PaperSize', [width_cm, height_cm]);
+
+ax_all = findall(fig_handle, 'Type', 'axes');
+for i_ax = 1:numel(ax_all)
+    set(ax_all(i_ax), ...
+        'FontName', 'SimHei', ...
+        'FontSize', 10, ...
+        'LineWidth', 1.0, ...
+        'Box', 'on', ...
+        'XGrid', 'on', ...
+        'YGrid', 'on', ...
+        'GridAlpha', 0.20, ...
+        'TickDir', 'out');
+end
+
+line_all = findall(fig_handle, 'Type', 'line');
+for i_ln = 1:numel(line_all)
+    if strcmp(get(line_all(i_ln), 'LineStyle'), 'none')
+        set(line_all(i_ln), 'LineWidth', 1.0);
+    else
+        set(line_all(i_ln), 'LineWidth', 1.5);
+    end
+end
+
+file_tiff = fullfile(out_dir, [out_name, '.tiff']);
+exportgraphics(fig_handle, file_tiff, 'Resolution', dpi);
+fprintf('【导出】%s\n', file_tiff);
 end

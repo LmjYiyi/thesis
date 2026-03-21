@@ -65,7 +65,22 @@ fprintf('  comparable points: %d, freq range: %.3f-%.3f GHz\n', ...
     numel(delta_ns), min(f_cmp_hz) / 1e9, max(f_cmp_hz) / 1e9);
 print_one_region_summary('all points', f_cmp_hz, delta_ns);
 
-if isfield(cfg, 'cfg_hybrid') && isfield(cfg.cfg_hybrid, 'f_flat_hi')
+if isfield(cfg, 'regions')
+    region_specs = { ...
+        'left_edge', cfg.regions.left_edge; ...
+        'flat_mid', cfg.regions.flat_mid; ...
+        'right_shoulder', cfg.regions.right_shoulder; ...
+        'right_edge', cfg.regions.right_edge ...
+    };
+    for ir = 1:size(region_specs, 1)
+        region_name = region_specs{ir, 1};
+        band_hz = region_specs{ir, 2};
+        mask_region = f_cmp_hz >= band_hz(1) & f_cmp_hz <= band_hz(2);
+        if any(mask_region)
+            print_one_region_summary(region_name, f_cmp_hz(mask_region), delta_ns(mask_region));
+        end
+    end
+elseif isfield(cfg, 'cfg_hybrid') && isfield(cfg.cfg_hybrid, 'f_flat_hi')
     mask_right = f_cmp_hz > cfg.cfg_hybrid.f_flat_hi;
     if any(mask_right)
         print_one_region_summary('right edge', f_cmp_hz(mask_right), delta_ns(mask_right));
@@ -110,11 +125,20 @@ n_neg = sum(delta_ns < 0);
 n_zero = sum(delta_ns == 0);
 [delta_max, idx_max] = max(delta_ns);
 [delta_min, idx_min] = min(delta_ns);
+abs_delta_ns = abs(delta_ns);
+mae_ns = mean(abs_delta_ns);
+rmse_ns = sqrt(mean(delta_ns .^ 2));
+[max_abs_ns, idx_abs] = max(abs_delta_ns);
+pass_010 = sum(abs_delta_ns <= 0.10) / numel(abs_delta_ns);
+pass_020 = sum(abs_delta_ns <= 0.20) / numel(abs_delta_ns);
 
 fprintf('  [%s]\n', region_name);
 fprintf('    pos/neg/zero: %d / %d / %d\n', n_pos, n_neg, n_zero);
-fprintf('    mean = %+0.4f ns, mean|.| = %.4f ns, rms = %.4f ns\n', ...
-    mean(delta_ns), mean(abs(delta_ns)), sqrt(mean(delta_ns .^ 2)));
+fprintf('    mean = %+0.4f ns, MAE = %.4f ns, RMSE = %.4f ns\n', ...
+    mean(delta_ns), mae_ns, rmse_ns);
+fprintf('    max|.| = %.4f ns @ %.4f GHz\n', max_abs_ns, f_hz(idx_abs) / 1e9);
+fprintf('    |delta|<=0.10 ns: %.1f%%, |delta|<=0.20 ns: %.1f%%\n', ...
+    100 * pass_010, 100 * pass_020);
 fprintf('    max positive: %+0.4f ns @ %.4f GHz\n', delta_max, f_hz(idx_max) / 1e9);
 fprintf('    max negative: %+0.4f ns @ %.4f GHz\n', delta_min, f_hz(idx_min) / 1e9);
 end
