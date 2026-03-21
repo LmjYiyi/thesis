@@ -27,6 +27,7 @@ base_raw = esp.run_fixed(v_proc, t_proc, fs_proc, cfg.f_start, cfg.K, ...
 
 base_clean = pp.clean(base_raw, true, cfg.cfg_base.name);
 base_cal   = pp.calibrate(base_clean, cfg.K, true, cfg.cfg_base.name);
+base_cal   = limit_frequency_range(base_cal, cfg.passband_lo, cfg.passband_hi);
 
 result.base_raw   = base_raw;
 result.base_clean = base_clean;
@@ -52,6 +53,35 @@ else
     result.adapt_clean = [];
 end
 
+function out = limit_frequency_range(in, f_lo, f_hi)
+out = in;
+
+if ~isfield(in, 'f_probe') || isempty(in.f_probe)
+    return;
+end
+
+mask = isfinite(in.f_probe) & in.f_probe >= f_lo & in.f_probe <= f_hi;
+fields = fieldnames(in);
+n = numel(in.f_probe);
+
+for k = 1:numel(fields)
+    name = fields{k};
+    value = in.(name);
+
+    if isnumeric(value) || islogical(value)
+        if isvector(value) && numel(value) == n
+            out.(name) = value(mask);
+        elseif ndims(value) == 2 && size(value, 1) == n && size(value, 2) > 1
+            out.(name) = value(mask, :);
+        end
+    elseif iscell(value) && isvector(value) && numel(value) == n
+        out.(name) = value(mask);
+    end
+end
+end
+
+hybrid_cal = limit_frequency_range(hybrid_cal, cfg.passband_lo, cfg.passband_hi);
+
 result.hybrid_cal = hybrid_cal;
 
 %% 6. 边缘精细重建（可选）
@@ -74,6 +104,7 @@ if cfg.cfg_refine.enable
             warning('未知 refine mode: %s, 跳过重建', cfg.cfg_refine.mode);
             refined = hybrid_cal;
     end
+    refined = limit_frequency_range(refined, cfg.passband_lo, cfg.passband_hi);
     result.refined = refined;
     result.final   = refined;
 else

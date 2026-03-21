@@ -111,6 +111,7 @@ f_bm = base_cal.f_probe(mask_mid); tau_bm = base_cal.tau(mask_mid);
 amp_bm = base_cal.amp(mask_mid);   win_bm = base_cal.win_len(mask_mid);
 f_am = f_adapt_cal(mask_adapt);     tau_am = adapt_clean.tau(mask_adapt);
 amp_am = adapt_clean.amp(mask_adapt); win_am = adapt_clean.win_len(mask_adapt);
+[tau_am, clamp_report] = clamp_local_adapt_overshoot(f_am, tau_am, base_cal, cfg);
 
 % 中段空洞用固定窗补填
 if isempty(f_am)
@@ -139,7 +140,160 @@ if show_summary
     fprintf('  混合频段: [%.2f, %.2f] GHz\n', cfg.f_flat_lo/1e9, cfg.f_flat_hi/1e9);
     fprintf('  固定窗口边缘: %d, 自适应中段: %d, 总点数: %d\n', ...
         sum(mask_edge), sum(mask_adapt), numel(out.f_probe));
+    if clamp_report.n_clamped > 0
+        fprintf('  adapt local cap: clamped %d pts, max drop %.3f ns\n', ...
+            clamp_report.n_clamped, clamp_report.max_drop_s * 1e9);
+    end
 end
+end
+
+%% ---- 区域定义（由 cfg.regions 生成边界表） ----
+%% ---- Local cap for adaptive overshoot in selected bands ----
+function [tau_out, report] = clamp_local_adapt_overshoot(f_adapt_hz, tau_in_s, base_cal, cfg)
+tau_out = tau_in_s;
+report.n_clamped = 0;
+report.max_drop_s = 0;
+
+if isempty(f_adapt_hz) || isempty(tau_in_s)
+    return;
+end
+
+if ~isfield(cfg, 'local_cap') || ~isstruct(cfg.local_cap)
+    return;
+end
+
+cap_cfg = cfg.local_cap;
+if ~isfield(cap_cfg, 'enable') || ~cap_cfg.enable
+    return;
+end
+
+if ~isfield(cap_cfg, 'bands_hz') || size(cap_cfg.bands_hz, 2) ~= 2
+    return;
+end
+
+margin_default_s = 0;
+if isfield(cap_cfg, 'margin_s') && ~isempty(cap_cfg.margin_s)
+    margin_cfg = cap_cfg.margin_s;
+else
+    margin_cfg = margin_default_s;
+end
+
+ref_pad_hz = 0.08e9;
+if isfield(cap_cfg, 'ref_pad_hz') && isfinite(cap_cfg.ref_pad_hz)
+    ref_pad_hz = max(cap_cfg.ref_pad_hz, 0);
+end
+
+for ib = 1:size(cap_cfg.bands_hz, 1)
+    f_lo = cap_cfg.bands_hz(ib, 1);
+    f_hi = cap_cfg.bands_hz(ib, 2);
+    margin_s = local_select_margin(margin_cfg, ib, margin_default_s);
+    mask_band = f_adapt_hz >= f_lo & f_adapt_hz <= f_hi;
+    if ~any(mask_band)
+        continue;
+    end
+
+    [tau_cap_s, has_ref] = build_local_cap_from_base( ...
+        f_adapt_hz(mask_band), base_cal, f_lo, f_hi, ref_pad_hz, margin_s);
+    if ~has_ref
+        continue;
+    end
+
+    tau_band_s = tau_out(mask_band);
+    mask_clip = isfinite(tau_cap_s) & (tau_band_s > tau_cap_s);
+    if ~any(mask_clip)
+        continue;
+    end
+
+    tau_old_s = tau_band_s(mask_clip);
+    tau_band_s(mask_clip) = tau_cap_s(mask_clip);
+    tau_out(mask_band) = tau_band_s;
+
+    drop_s = tau_old_s - tau_cap_s(mask_clip);
+    report.n_clamped = report.n_clamped + sum(mask_clip);
+    report.max_drop_s = max(report.max_drop_s, max(drop_s));
+end
+end
+
+function [tau_cap_s, has_ref] = build_local_cap_from_base(f_query_hz, base_cal, ...
+    f_lo, f_hi, ref_pad_hz, margin_s)
+tau_cap_s = NaN(size(f_query_hz));
+has_ref = false;
+
+if ~isfield(base_cal, 'f_probe') || ~isfield(base_cal, 'tau') ...
+        || isempty(base_cal.f_probe) || isempty(base_cal.tau)
+    return;
+end
+
+mask_ref = base_cal.f_probe >= (f_lo - ref_pad_hz) & ...
+           base_cal.f_probe <= (f_hi + ref_pad_hz) & ...
+           isfinite(base_cal.f_probe) & isfinite(base_cal.tau);
+if sum(mask_ref) < 4
+    return;
+end
+
+[f_ref_hz, si] = sort(base_cal.f_probe(mask_ref));
+tau_ref_s = base_cal.tau(mask_ref);
+tau_ref_s = tau_ref_s(si);
+[f_ref_hz, ui] = unique(f_ref_hz, 'stable');
+tau_ref_s = tau_ref_s(ui);
+
+for iq = 1:numel(f_query_hz)
+    dq = abs(f_ref_hz - f_query_hz(iq));
+    local_mask = dq <= ref_pad_hz;
+    if sum(local_mask) < 3
+        [~, idx_near] = mink(dq, min(3, numel(dq)));
+        local_mask = false(size(dq));
+        local_mask(idx_near) = true;
+    end
+
+    tau_local_s = tau_ref_s(local_mask);
+    tau_local_s = tau_local_s(isfinite(tau_local_s));
+    if numel(tau_local_s) < 3
+        continue;
+    end
+
+    tau_cap_s(iq) = percentile_linear(tau_local_s, 0.30) + margin_s;
+end
+
+has_ref = any(isfinite(tau_cap_s));
+end
+
+function margin_s = local_select_margin(margin_cfg, idx, margin_default_s)
+margin_s = margin_default_s;
+if isempty(margin_cfg)
+    return;
+end
+
+if isscalar(margin_cfg)
+    if isfinite(margin_cfg)
+        margin_s = max(margin_cfg, 0);
+    end
+    return;
+end
+
+if idx <= numel(margin_cfg) && isfinite(margin_cfg(idx))
+    margin_s = max(margin_cfg(idx), 0);
+end
+end
+
+function value = percentile_linear(x, p)
+x = sort(x(:));
+if isempty(x)
+    value = NaN;
+    return;
+end
+
+p = min(max(p, 0), 1);
+if numel(x) == 1
+    value = x;
+    return;
+end
+
+pos = 1 + (numel(x) - 1) * p;
+idx_lo = floor(pos);
+idx_hi = ceil(pos);
+alpha = pos - idx_lo;
+value = (1 - alpha) * x(idx_lo) + alpha * x(idx_hi);
 end
 
 %% ---- 区域定义（由 cfg.regions 生成边界表） ----

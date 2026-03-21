@@ -38,19 +38,31 @@ cfg.cfg_base.name     = '固定窗口';
 
 %% 自适应窗口配置
 cfg.cfg_adapt.step_center = 9;
-cfg.cfg_adapt.win_short   = 120;
-cfg.cfg_adapt.win_mid1    = 160;
-cfg.cfg_adapt.win_mid2    = 220;
+cfg.cfg_adapt.win_short   = 140;
+cfg.cfg_adapt.win_mid1    = 210;
+cfg.cfg_adapt.win_mid2    = 260;
 cfg.cfg_adapt.win_long    = 300;
 cfg.cfg_adapt.tau_thr_1   = 0.9e-9;
-cfg.cfg_adapt.tau_thr_2   = 1.4e-9;
-cfg.cfg_adapt.tau_thr_3   = 2.0e-9;
+cfg.cfg_adapt.tau_thr_2   = 1.70e-9;
+cfg.cfg_adapt.tau_thr_3   = 2.25e-9;
 cfg.cfg_adapt.name        = '自适应窗口';
 
 %% 混合融合配置（由通带 + 相对偏移推导）
 cfg.cfg_hybrid.f_flat_lo    = cfg.passband_lo + 0.28 * BW;   % 36.78e9
 cfg.cfg_hybrid.f_flat_hi    = cfg.passband_hi - 0.12 * BW;   % 37.38e9
 cfg.cfg_hybrid.mid_fill_gap = 0.020e9;
+cfg.cfg_hybrid.local_cap.enable = true;
+cfg.cfg_hybrid.local_cap.margin_s = [
+    0.162e-9;
+    0.290e-9;
+    0.076e-9
+];
+cfg.cfg_hybrid.local_cap.ref_pad_hz = 0.14e9;
+cfg.cfg_hybrid.local_cap.bands_hz = [
+    36.79e9, 36.84e9;
+    36.84e9, 36.9527e9;
+    37.20e9, 37.30e9
+];
 
 %% 右侧边缘重建配置（默认：data_driven 模式）
 cfg.cfg_refine.enable        = true;

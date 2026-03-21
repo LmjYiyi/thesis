@@ -28,7 +28,8 @@
       "Bash(mkdir:*)",
       "Bash(where python:*)",
       "Bash(do echo:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(git diff:*)"
     ]
   }
 }
