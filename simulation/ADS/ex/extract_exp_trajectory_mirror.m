@@ -26,6 +26,9 @@ if isfield(cfg.cfg_refine, 'group_freq_gap')
 end
 
 cfg.export_name = 'exp_delay_trajectory_mirror';
+cfg.xlim_range  = [36.5, 37.5];
+cfg.deviation_report.enable = true;
+cfg.deviation_report.top_n  = 8;
 cfg.title_str   = '实测 LFMCW 时延轨迹（镜像版）';
 
 %% 运行管线

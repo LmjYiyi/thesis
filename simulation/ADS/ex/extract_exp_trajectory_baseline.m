@@ -17,7 +17,7 @@ cfg.cfg_refine.mode     = 'none';
 
 cfg.export_name = 'exp_delay_trajectory_baseline';
 cfg.title_str   = '实测 LFMCW 时延轨迹（基线版）';
-cfg.xlim_range  = [36.0, 38.0];
+cfg.xlim_range  = [36.5, 37.5];
 
 %% 运行管线
 result = run_trajectory_pipeline(cfg);

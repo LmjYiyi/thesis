@@ -1,5 +1,15 @@
 # 右侧边缘提取与 `ex/` 目录整理记录
 
+## 0. 2026-03-21 变更记录（S2P曲线叠加与坐标回调）
+
+- `lib/plot_trajectory_result.m` 已叠加 `data/HXLBQ-DTA1329-1-1.s2p` 的 S21 群时延曲线（与 `plot_s2p_group_delay_curve.m` 同源计算逻辑）。
+- 三个入口脚本横坐标范围统一为 `36.5-37.5 GHz`：
+  - `extract_exp_trajectory_baseline.m`
+  - `extract_exp_trajectory_data_driven.m`
+  - `extract_exp_trajectory_mirror.m`
+- `plot_s2p_group_delay_curve.m` 的显示窗口回调到 `36.5-37.5 GHz`。
+- 绘图导出失败时改为 `warning`，不再中断轨迹图显示与诊断输出。
+
 ## 1. 当前数据驱动版本的主逻辑结论
 
 - 当前主脚本是 `extract_exp_trajectory_data_driven.m`。
