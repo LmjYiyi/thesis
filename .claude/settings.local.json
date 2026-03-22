@@ -29,7 +29,9 @@
       "Bash(where python:*)",
       "Bash(do echo:*)",
       "Bash(cd:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)"
     ]
   }
 }
