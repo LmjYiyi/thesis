@@ -174,7 +174,14 @@ def _rewrite_tagged_display_math(text: str) -> str:
         rewritten = normalize_math_for_mathtype(rewritten)
         return f"$${rewritten}$$\n\n{EQNO_MARKER}{rendered_tag}\n"
 
-    return re.sub(r"\$\$(.*?)\$\$", repl, text, flags=re.DOTALL)
+    # Match display math blocks: $$ on its own line (or at line start) ... $$
+    # Avoid matching spurious $$ created by adjacent inline math like $x$$y$
+    return re.sub(
+        r"(?:^|\n)\s*\$\$(.*?)\$\$\s*(?:\n|$)",
+        lambda m: "\n" + repl(m) + "\n",
+        text,
+        flags=re.DOTALL,
+    )
 
 
 def _ensure_paragraph_alignment(paragraph, alignment: str) -> None:

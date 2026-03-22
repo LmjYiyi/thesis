@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MF0 version="1.1" packageUris="http://schema.mathworks.com/mf0/mvm_cache_model/R2020a">
+  <mvm.services.MVMCache type="mvm.services.MVMCache" uuid="1c5f5174-6734-49a1-a839-f652dfef827c">
+    <clientCapabilities>RuntimeUserInput</clientCapabilities>
+    <clientCapabilities>Swing</clientCapabilities>
+    <clientCapabilities>ComplexSwing</clientCapabilities>
+    <clientCapabilities>LocalClient</clientCapabilities>
+    <clientCapabilities>WebWindow</clientCapabilities>
+    <clientCapabilities>ModalDialogs</clientCapabilities>
+    <clientCapabilities>Debugging</clientCapabilities>
+    <currentWorkingDirectory>D:\桌面\lunwen\thesis\simulation\ADS</currentWorkingDirectory>
+    <cwdFileinfo type="mvm.services.FileInfo">
+      <isDirectory>true</isDirectory>
+      <location>D:\桌面\lunwen\thesis\simulation</location>
+      <modifiedUTC>2026-Mar-20 06:34:19.848836</modifiedUTC>
+      <name>ADS</name>
+      <separator>\</separator>
+      <writable>true</writable>
+    </cwdFileinfo>
+    <mvmCapabilities>Swing</mvmCapabilities>
+    <mvmCapabilities>ComplexSwing</mvmCapabilities>
+    <mvmCapabilities>LocalClient</mvmCapabilities>
+    <mvmCapabilities>WebWindow</mvmCapabilities>
+    <workspaceVarNames>ans</workspaceVarNames>
+  </mvm.services.MVMCache>
+</MF0>

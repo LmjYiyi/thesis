@@ -31,7 +31,28 @@
       "Bash(cd:*)",
       "Bash(git diff:*)",
       "Bash(wc:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(for f:*)",
+      "Read(//d/桌面/lunwen/thesis/**)",
+      "Bash(done)",
+      "Bash(python -c \":*)",
+      "Bash(rm -f writing/_chapter3_sync_tmp.md writing/_chapter4_sync_tmp.md writing/_chapter5_sync_tmp.md writing/_references_sync_tmp.md)",
+      "Bash(rm -f writing/versions/opus.bak-*.docx)",
+      "Bash(rm -f writing/versions/opus.docx)",
+      "Bash(mv writing/versions/opus2.docx writing/versions/opus.docx)",
+      "Bash(rm -f writing/versions/opus2.bak-*.docx)",
+      "Bash(do sed:*)",
+      "Bash(echo \"Fixed: $f\")",
+      "Bash(\"D:/桌面/lunwen/thesis/check_headers.py\":*)",
+      "Bash(bash \"D:/桌面/lunwen/thesis/full_sync.sh\")",
+      "Bash(rm -f \"D:/桌面/lunwen/thesis/writing/versions/opus2.bak\"*.docx)",
+      "Bash(rm -f \"D:/桌面/lunwen/thesis/writing/_ch\"*_merged.md)",
+      "Bash(for file:*)",
+      "Bash(find D:/桌面/lunwen/thesis -name *基于线性调频连续波* -o -name *reference*docx)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3 -u -c \"print\\(''hello''\\)\")",
+      "Bash(rm -f postprocess_comprehensive.py)",
+      "Bash(rm -rf skills/thesis-docx-sync/scripts/__pycache__)"
     ]
   }
 }

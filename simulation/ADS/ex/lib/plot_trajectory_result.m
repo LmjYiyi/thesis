@@ -106,7 +106,7 @@ else
     xlim([36.5, 37.5]);
 end
 
-legend(legend_handles, legend_labels, 'Location', 'northeast', 'FontSize', 11);
+% legend(legend_handles, legend_labels, 'Location', 'northeast', 'FontSize', 11);
 
 try
     pp.export_figure(gcf, cfg.export_name, 14, 300);

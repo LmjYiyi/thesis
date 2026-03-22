@@ -18,7 +18,7 @@ cfg.export_name = 'exp_delay_trajectory_data_driven';
 cfg.xlim_range  = [36.4, 37.6];
 cfg.deviation_report.enable = true;
 cfg.deviation_report.top_n  = 8;
-cfg.title_str   = '实测 LFMCW 时延轨迹（纯数据驱动版）';
+cfg.title_str   = '实测 LFMCW 时延轨迹';
 
 %% 运行管线
 result = run_trajectory_pipeline(cfg);

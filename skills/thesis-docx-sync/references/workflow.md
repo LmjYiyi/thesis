@@ -4,7 +4,7 @@
 
 This skill is intentionally narrow. Use it for section-level thesis updates where the Markdown already contains the final wording and the master document is a `.docx` file with stable heading styles.
 
-Supported in v3:
+Supported in v4:
 
 - heading-bounded section replacement
 - chapter-level sync after merging multiple Markdown section files into one temporary chapter file
@@ -13,6 +13,12 @@ Supported in v3:
 - body paragraphs
 - ordered and unordered lists
 - standard Word tables produced by `pandoc`
+- **三线表 table formatting** (thick top/bottom borders, thin header separator, no vertical lines, centered, 10.5pt font) — applied automatically by `postprocess_styles.py`
+- **table caption detection** (paragraph immediately before `w:tbl` → `标题-表格` style)
+- **figure caption detection** (paragraph immediately after image → `标题-图` style; also `ImageCaption` pandoc style)
+- **reference section styling** (all paragraphs after `参考文献` heading → `参考文献` style)
+- **display equation styling** (paragraphs containing `m:oMathPara` → `公式` style)
+- **page header updates** (correct "第X章 标题" text in each chapter's header XML)
 - inline and display math rendered by `pandoc`
 - display equations that include `\tag{...}` in Markdown
 - Markdown image references that can be resolved to local files inside the thesis workspace
@@ -51,11 +57,19 @@ python skills/thesis-docx-sync/scripts/preflight_markdown_sync.py ^
 5. Run `dump_docx_outline.py` on the target master file and copy the exact heading text you want to replace.
 6. If the master file is an older thesis version, confirm the target block by surrounding headings and body position instead of assuming the chapter numbering still matches the Markdown numbering.
 7. Run `sync_markdown_to_docx.py` with that heading as the anchor.
-8. If the output file is open in Word, close it or write to a new output filename first.
-9. Open the output `.docx` in Word and refresh table of contents, figure index, and table index if needed.
-10. Do a fast visual check on formulas, tables, paragraph spacing, chapter breaks, and figure sizing.
-11. If a formula used `\tag{...}`, confirm the number is still visually acceptable after conversion.
-12. If the chapter contains footnotes or internal jump links, click a few representative items in Word to confirm they still resolve correctly.
+8. Run `postprocess_styles.py` — this is **mandatory** and now handles all post-processing in one pass:
+   - pandoc style remapping (Body Text → Normal, ImageCaption → 标题-图, etc.)
+   - position-based caption detection (figure captions, table captions)
+   - section-based reference styling
+   - display equation styling
+   - 三线表 table formatting
+   - image paragraph centering and auto line spacing
+   - page header text updates
+9. If the output file is open in Word, close it or write to a new output filename first.
+10. Open the output `.docx` in Word and refresh table of contents, figure index, and table index if needed.
+11. Do a fast visual check on formulas, tables, paragraph spacing, chapter breaks, and figure sizing.
+12. If a formula used `\tag{...}`, confirm the number is still visually acceptable after conversion.
+13. If the chapter contains footnotes or internal jump links, click a few representative items in Word to confirm they still resolve correctly.
 
 ## Why This Works
 
@@ -68,6 +82,19 @@ Before rendering, the script rewrites display equations containing `\tag{...}` i
 When the target anchor uses a non-numbered title style instead of a numbered heading style, the script also aligns the first inserted heading paragraph to that target style so abstract-like sections keep the template's original appearance.
 
 The preflight step exists because Word is much less tolerant than Markdown for two patterns: off-policy image paths and dense inline formulas. In this thesis project, final images should point at `writing/figures/final_output_doc/` and helper artifacts must never be written back into that canonical directory. For body text, simple inline fractions should usually be rewritten in slash notation, while numbered formulas should remain display equations.
+
+The post-processor (`postprocess_styles.py`) is a comprehensive single-pass tool that corrects everything pandoc cannot handle natively: style remapping, position-based caption detection, 三线表 table formatting, reference section styling, equation paragraph styling, image centering, and page header updates.
+
+## Markdown Preparation Checklist
+
+Before syncing any chapter, verify:
+
+1. **No number prefixes in captions.** Word auto-numbering via `标题-图` and `标题-表格` styles adds "图3.1" / "表4.2" automatically. Markdown captions must contain only descriptive text. Check for patterns like `图\d+\.\d+` or `表\d+\.\d+` at the start of captions and strip them.
+2. **No bold-wrapped table captions.** Patterns like `**表4.2 title**` must be simplified to just `title`.
+3. **参考文献.md starts with `# 参考文献`.** Missing heading causes sync to overwrite the Word heading text with the first reference entry.
+4. **No `\boxed{}` in display math.** pandoc cannot render `\boxed` to Word OMML. Remove the wrapper.
+5. **No complex inline math.** Inline `$\frac{...}{...}$`, `$\sqrt{...}$` may be invisible in Word. Convert to display math or simplify to slash notation.
+6. **Each table has a standalone caption line.** A plain text line immediately before the Markdown table (not embedded in a paragraph). The post-processor detects this by checking if the next XML sibling is `w:tbl`.
 
 ## Failure Modes
 
@@ -85,3 +112,7 @@ The preflight step exists because Word is much less tolerant than Markdown for t
 - If the script reports the output DOCX is locked or open, close the file in Word or change `--output`.
 - If the table of contents or figure index looks stale after sync, update fields in Word instead of editing those index pages manually.
 - If the master file is still `.doc`, convert it to `.docx` first and treat the converted file as the new single source of truth.
+- **If figure/table captions show duplicate numbering** (e.g., "图3.6 图3.6"), the Markdown caption contains a number prefix that should be stripped. See Markdown Preparation Checklist.
+- **If formulas after a certain section are invisible**, check for `\boxed{}`, nested `\frac` inside inline math, or `\sqrt` in inline context. Convert to display math or simplify.
+- **If page headers show wrong chapter titles**, re-run `postprocess_styles.py` (it updates headers based on Heading 1 positions). Use `--no-headers` to skip this if headers are already correct.
+- **If tables have ugly borders or wrong formatting**, ensure `postprocess_styles.py` was run — it applies 三线表 formatting to all tables.
